@@ -141,12 +141,17 @@
     "data",
     "visual"
    ],
+   "raster:bands": [
+    {
+     "nodata": 0,
+     "data_type": "uint8"
+    }
+   ],
    "classification:classes": [
     {
      "value": 1,
      "name": "land",
-     "description": "land",
-     "color_hint": "000000"
+     "description": "land"
     },
     {
      "value": 2,

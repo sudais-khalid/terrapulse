@@ -35,7 +35,7 @@ Built by team **TERRAPULSE** (Sudais Khalid, Sunnia Aslam, Topi, Pakistan) for t
 - **Honest about uncertainty.** Passes are flagged automatically when wind roughened the reference water or when GPM IMERG shows heavy rain in the three days before. Flagged passes are marked everywhere and left out of peaks.
 - **Numbers cannot drift.** Story text is computed from the exported data in the browser, and a contract test checks the data on every push.
 - **Reusable outputs.** A STAC catalog with the SAR, projection, raster and classification extensions makes every PNG georeferenced and decodable to dB by any tool.
-- **Engineered to last.** Package with a CLI, 46 tests, CI on Python 3.10 to 3.13, a Colab notebook kept in sync by a test, and a static app with no build step.
+- **Engineered to last.** Package with a CLI, 57 tests (all 8 planted faults caught in mutation testing), CI on Python 3.10 to 3.13, a Colab notebook kept in sync by a test, and a static app with no build step.
 
 ## Layers
 
@@ -133,7 +133,7 @@ Deploying: push to GitHub and set *Settings > Pages > Source* to *GitHub Actions
 ```bash
 pip install -e ".[dev]"
 ruff check .
-pytest            # 46 tests: geometry, granule selection, HDF5 decoder vs h5py, products, flags, data contract, notebook sync, STAC
+pytest            # 57 tests: geometry, granule selection, HDF5 decoder vs h5py, products, flags, data contract, notebook sync, STAC
 ```
 
 CI runs the same checks on Python 3.10 to 3.13 on every push, plus JavaScript and JSON checks for the web app. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the pieces fit together.

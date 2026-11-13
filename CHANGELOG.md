@@ -6,6 +6,8 @@ All notable changes to TerraPulse. The format follows [Keep a Changelog](https:/
 
 ### Changed
 
+- Tests checked with Counterproof mutation testing: all 8 planted faults in the STAC code are now caught (was 1 of 4). Test suite grows from 46 to 57 tests: no silent skips (missing data now fails), full per-pass metadata checks, and a golden-file comparison of the rebuilt catalog.
+- STAC: fully transparent classes (land) no longer carry a misleading black colour hint; the collection's class template now matches the items.
 - GitHub Actions updated to their Node 24 releases (checkout 7, setup-python 7, setup-node 7, configure-pages 6, upload-pages-artifact 5, deploy-pages 5); Dependabot now groups updates into one pull request per ecosystem.
 
 ## [1.0.0] - 2026-11-13

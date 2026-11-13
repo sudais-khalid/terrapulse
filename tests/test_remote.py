@@ -1,10 +1,9 @@
 """The streaming HDF5 decoder must give exactly what h5py gives, chunk by chunk."""
+import h5py
 import numpy as np
 import pytest
 
 from terrapulse.remote import ChunkRef, _coalesce, chunk_index, decode_chunk, filter_pipeline
-
-h5py = pytest.importorskip("h5py")
 
 
 @pytest.fixture

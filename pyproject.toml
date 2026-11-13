@@ -67,4 +67,5 @@ ignore = ["E501"]  # long lines are kept where they read better (tables, URLs, p
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]  # import the package from this checkout, installed or not
 addopts = "-ra"

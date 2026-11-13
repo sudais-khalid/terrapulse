@@ -1,4 +1,6 @@
-"""Contract tests for the published web data: what the browser app relies on."""
+"""Contract tests for the published web data: what the browser app relies on.
+
+web/data is committed, so a missing file is a real failure, never a reason to skip."""
 import json
 from pathlib import Path
 
@@ -6,9 +8,11 @@ import pytest
 from PIL import Image
 
 WEB = Path(__file__).resolve().parents[1] / "web" / "data"
-SITES = json.loads((WEB / "sites.json").read_text())["sites"] if (WEB / "sites.json").exists() else []
+SITES = json.loads((WEB / "sites.json").read_text())["sites"]
 
-pytestmark = pytest.mark.skipif(not SITES, reason="web/data not exported")
+
+def test_every_site_is_published():
+    assert {s["key"] for s in SITES} == {"lower-indus", "amazon-manaus"}
 
 
 @pytest.fixture(params=[s["key"] for s in SITES])

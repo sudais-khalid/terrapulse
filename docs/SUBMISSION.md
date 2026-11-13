@@ -49,7 +49,7 @@ TerraPulse answers three questions for any NISAR study area: where is water now,
 8. Rainfall: daily NASA GPM IMERG averaged over each zone.
 9. Results are exported as small 8-bit Web Mercator PNG layers and a manifest. The static web app (MapLibre GL JS, plain JavaScript) decodes and colours them in the browser, so thresholds and change maps are computed live.
 10. The same layers are published as a validated STAC 1.1.0 catalog. It records how to turn each 8-bit pixel back into decibels, where each image sits on Earth, what each class code means, and every pass's quality flags.
-11. Engineering: a Python package with a command line, 46 automated tests (including the HDF5 decoder checked against h5py and the published data checked on every push), continuous integration on Python 3.10 to 3.13, and a Colab notebook kept in sync with the code by a test.
+11. Engineering: a Python package with a command line, 57 automated tests (including the HDF5 decoder checked against h5py and the published data checked on every push), continuous integration on Python 3.10 to 3.13, and a Colab notebook kept in sync with the code by a test.
 
 **Key results (lower Indus, 21 Nov 2025 to 23 Oct 2026)**
 

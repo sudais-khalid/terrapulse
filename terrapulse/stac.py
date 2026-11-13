@@ -46,12 +46,21 @@ def _start_time(scene: str, day: str) -> str:
     return f"{day}T00:00:00Z"
 
 
+def _color_hint(color: str) -> str | None:
+    """'#RRGGBB' or '#RRGGBBAA' to 'RRGGBB'; None for fully transparent classes (not drawn)."""
+    h = color.lstrip("#")
+    if len(h) == 8 and h[6:] == "00":
+        return None
+    return h[:6].upper()
+
+
 def _classes(items: list[tuple[int, str, str, str]]) -> list[dict]:
     out = []
     for value, name, description, color in items:
         c = {"value": value, "name": name, "description": description}
-        if color and len(color.lstrip("#")) >= 6:
-            c["color_hint"] = color.lstrip("#")[:6].upper()
+        hint = _color_hint(color)
+        if hint:
+            c["color_hint"] = hint
         out.append(c)
     return out
 
@@ -118,8 +127,7 @@ def build_site(root: Path) -> dict:
     m = json.loads((root / "manifest.json").read_text())
     site = m["site"]
     geom, bbox, proj = _geometry(m)
-    class_list = _classes([(int(k), _slug(v), v, CLASS_PALETTE[int(k)] if int(k) < len(CLASS_PALETTE) else "")
-                           for k, v in m["classes"].items() if k != "0"])
+    class_list = _classes([(int(k), _slug(v), v, CLASS_PALETTE[int(k)]) for k, v in m["classes"].items() if k != "0"])
     rhythm = _classes([(c["code"], _slug(c["label"]), f"{c['label']} ({c['dance']})", c["color"])
                        for c in m["rhythm_classes"]])
     items_dir = root / "items"
@@ -170,7 +178,7 @@ def build_site(root: Path) -> dict:
             "hh": {"type": PNG, "title": "HH backscatter (gamma-naught, dB)", "roles": ["data"], "raster:bands": [DB_BAND]},
             "hv": {"type": PNG, "title": "HV backscatter (gamma-naught, dB)", "roles": ["data"], "raster:bands": [DB_BAND]},
             "class": {"type": PNG, "title": "Open water and likely flooded vegetation", "roles": ["data", "visual"],
-                      "classification:classes": class_list},
+                      "raster:bands": [{"nodata": 0, "data_type": "uint8"}], "classification:classes": class_list},
         },
         "assets": {
             "water_occurrence": product("water_occurrence", "Share of passes with open water", FRACTION_BAND),
@@ -206,7 +214,7 @@ def build(web_data: Path, log=print) -> Path:
     for s in index["sites"]:
         col = build_site(web_data / s["key"])
         links.append({"rel": "child", "href": f"{s['key']}/collection.json", "type": "application/json", "title": col["title"]})
-        log(f"  stac: {s['key']} collection with {sum(1 for lk in col['links'] if lk['rel'] == 'item')} items")
+        log(f"  stac: {s['key']} collection with {s['passes']} items")
     catalog = {"type": "Catalog", "stac_version": STAC_VERSION, "id": "terrapulse", "title": "TerraPulse NISAR surface change",
                "description": ("Open water, flooded vegetation, change and seasonal rhythm mapped from NASA-ISRO NISAR "
                                "L-band radar time series by the TerraPulse open-source pipeline."),
