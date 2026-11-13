@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use TerraPulse or its outputs, please cite it as below."
+title: "TerraPulse: NISAR L-band surface change mapping and interactive web app"
+type: software
+authors:
+  - given-names: Sudais
+    family-names: Khalid
+  - given-names: Sunnia
+    family-names: Aslam
+version: 1.0.0
+date-released: 2026-11-13
+license: Apache-2.0
+repository-code: "https://github.com/sudais-khalid/terrapulse"
+url: "https://sudais-khalid.github.io/terrapulse/"
+abstract: >-
+  TerraPulse turns NASA-ISRO NISAR L-band GCOV radar time series into web-ready
+  layers of open water, likely flooded vegetation, change and seasonal rhythm,
+  calibrated per radar mode on permanent water against never-flooded land and
+  flagged for wind and heavy rain. Layers are published as a STAC catalog and
+  explored in an open-source web app, with study sites on the lower Indus
+  (Sindh, Pakistan) and the Amazon at Manaus (Brazil).
+keywords:
+  - NISAR
+  - synthetic aperture radar
+  - L-band
+  - flood mapping
+  - wetlands
+  - change detection
+  - STAC
+  - NASA Space Apps Challenge

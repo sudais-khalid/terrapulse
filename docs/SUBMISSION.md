@@ -35,6 +35,7 @@ TerraPulse answers three questions for any NISAR study area: where is water now,
 - **Tools**: click any pixel for its radar history, drag a box to measure any area across all passes, download CSV, and see automatically detected notable changes (compared only between passes in the same radar mode).
 - **Anywhere on Earth**: fly anywhere, find the dates NISAR imaged that spot through the ASF Search API, and view NASA GIBS NISAR mosaics.
 - **Shareable links** reproduce any view.
+- **Open data**: every map layer is published as a STAC catalog, the open standard for Earth observation data, so anyone can reuse TerraPulse outputs in Python, QGIS or STAC Browser. Each pass links back to its source NISAR granule.
 
 **How it works**
 
@@ -47,6 +48,8 @@ TerraPulse answers three questions for any NISAR study area: where is water now,
 7. Surface rhythm: unsupervised k-means clustering of each pixel's yearly statistics, named by physical rules (permanent water, seasonal water, flood-prone vegetation, cropland, woody vegetation, built-up, bare soil, sparse vegetation).
 8. Rainfall: daily NASA GPM IMERG averaged over each zone.
 9. Results are exported as small 8-bit Web Mercator PNG layers and a manifest. The static web app (MapLibre GL JS, plain JavaScript) decodes and colours them in the browser, so thresholds and change maps are computed live.
+10. The same layers are published as a validated STAC 1.1.0 catalog. It records how to turn each 8-bit pixel back into decibels, where each image sits on Earth, what each class code means, and every pass's quality flags.
+11. Engineering: a Python package with a command line, 46 automated tests (including the HDF5 decoder checked against h5py and the published data checked on every push), continuous integration on Python 3.10 to 3.13, and a Colab notebook kept in sync with the code by a test.
 
 **Key results (lower Indus, 21 Nov 2025 to 23 Oct 2026)**
 
@@ -65,6 +68,7 @@ TerraPulse answers three questions for any NISAR study area: where is water now,
 - Wetland managers can track Ramsar lakes and lagoons pass by pass.
 - Teachers and the public get radar explained in plain words, pictures and sound.
 - The method scales: a new site is a short configuration entry and one Colab run, and the worldwide view works for any place NISAR images.
+- Researchers and other apps can build on the outputs directly through the STAC catalog, without contacting us or reading our code.
 
 **Limits we state openly**
 
@@ -72,7 +76,7 @@ Wind-roughened water is undercounted (flagged); smooth dry desert can pass the w
 
 **Tools, languages, hardware and software**
 
-Python (NumPy, h5py, fsspec, aiohttp, SciPy, Pillow, asf_search), Google Colab for processing, JavaScript with MapLibre GL JS for the web app, Web Audio API for sound, GitHub Pages and GitHub Actions for hosting. Projection math (UTM, Web Mercator) and k-means are implemented in NumPy so the pipeline runs on restricted machines. No special hardware.
+Python (NumPy, h5py, fsspec, aiohttp, SciPy, Pillow, asf_search), Google Colab for processing, JavaScript with MapLibre GL JS for the web app, Web Audio API for sound, GitHub Pages and GitHub Actions for hosting and continuous integration, pytest and ruff for testing and linting, STAC 1.1.0 (validated with pystac) for open data. Projection math (UTM, Web Mercator) and k-means are implemented in NumPy so the pipeline runs on restricted machines. No special hardware.
 
 ## NASA data
 
