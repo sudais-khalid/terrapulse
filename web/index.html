@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TerraPulse</title>
+  <meta name="description" content="TerraPulse turns NISAR L-band radar into a living map of floods, wetlands and crops in Lower Sindh, Pakistan, and lets you explore NISAR imagery anywhere on Earth.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Big+Shoulders+Display:wght@600;800&family=Martian+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="assets/app.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230e1530'/%3E%3Cpath d='M3 18h6l3-9 4 15 3-10 2 4h8' fill='none' stroke='%23d0563f' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="wordmark">TerraPulse</span>
+      <span class="tagline">Reading Earth's signals. Revealing its changes.</span>
+    </div>
+    <nav class="modes" aria-label="Mode">
+      <button class="mode" data-mode="story" aria-pressed="true">Story</button>
+      <button class="mode" data-mode="explore" aria-pressed="false">Explore</button>
+      <button class="mode" data-mode="learn" aria-pressed="false">How it works</button>
+    </nav>
+  </header>
+
+  <main class="stage">
+    <div id="map" class="map" aria-label="Map"></div>
+    <div id="map-b" class="map map-b" aria-hidden="true"></div>
+    <div id="swipe" class="swipe" hidden>
+      <div class="swipe-handle" role="slider" tabindex="0" aria-label="Compare divider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"></div>
+      <span class="swipe-tag swipe-tag-a" id="swipe-tag-a"></span>
+      <span class="swipe-tag swipe-tag-b" id="swipe-tag-b"></span>
+    </div>
+
+    <aside class="panel" id="panel">
+      <!-- Story -->
+      <section class="pane" data-pane="story">
+        <div class="story-progress" id="story-progress"></div>
+        <article class="chapter" id="chapter" aria-live="polite"></article>
+        <div class="chapter-nav">
+          <button id="prev-ch" class="btn ghost">Back</button>
+          <button id="next-ch" class="btn">Next</button>
+        </div>
+      </section>
+
+      <!-- Explore -->
+      <section class="pane" data-pane="explore" hidden>
+        <h2 class="pane-title">Layers</h2>
+        <fieldset class="layers" id="layer-list">
+          <legend class="sr-only">Map layer</legend>
+        </fieldset>
+        <div id="layer-legend" class="legend"></div>
+
+        <div class="control-block" id="compare-block">
+          <label class="switch"><input type="checkbox" id="compare-toggle"> <span>Compare two dates</span></label>
+          <div class="compare-dates" id="compare-dates" hidden>
+            <label>Left <select id="date-a"></select></label>
+            <label>Right <select id="date-b"></select></label>
+          </div>
+        </div>
+
+        <div class="control-block" id="threshold-block" hidden>
+          <label for="thr">Water threshold, HH <output id="thr-out"></output></label>
+          <input type="range" id="thr" min="-26" max="-10" step="0.5">
+          <p class="hint">Pixels darker than this in HH count as open water. Drag to see how sensitive the map is to the choice.</p>
+        </div>
+
+        <div class="control-block">
+          <label for="opacity">Layer opacity</label>
+          <input type="range" id="opacity" min="0" max="1" step="0.05" value="0.9">
+        </div>
+
+        <h2 class="pane-title">Places</h2>
+        <div class="places" id="places"></div>
+
+        <h2 class="pane-title">Anywhere on Earth</h2>
+        <p class="hint">Switch to <em>NISAR worldwide</em> in Layers, then fly anywhere. NASA GIBS serves NISAR radar mosaics for every day since October 2025.</p>
+        <div class="places" id="world-places"></div>
+      </section>
+
+      <!-- Learn -->
+      <section class="pane prose" data-pane="learn" hidden>
+        <div id="learn"></div>
+      </section>
+    </aside>
+
+    <aside class="inspector" id="inspector" hidden>
+      <header>
+        <h2>Pixel history</h2>
+        <button class="icon-btn" id="close-inspector" aria-label="Close pixel history">&times;</button>
+      </header>
+      <p class="coords" id="insp-coords"></p>
+      <svg id="insp-chart" class="insp-chart" role="img" aria-label="Radar backscatter over time at the selected point"></svg>
+      <p class="insp-read" id="insp-read"></p>
+    </aside>
+
+    <div class="date-chip" id="date-chip" aria-live="polite" hidden></div>
+    <div class="status" id="status" role="status"></div>
+  </main>
+
+  <footer class="pulse" id="pulse">
+    <div class="pulse-head">
+      <button class="play" id="play" aria-label="Play through the year"><span class="play-icon"></span></button>
+      <div class="pulse-label">
+        <span class="pulse-title" id="pulse-title">Open water, whole study area</span>
+        <span class="pulse-sub" id="pulse-sub"></span>
+      </div>
+      <select id="zone-select" class="zone-select" aria-label="Area shown in the pulse strip"></select>
+    </div>
+    <svg id="pulse-svg" class="pulse-svg" role="slider" tabindex="0" aria-label="Date"></svg>
+  </footer>
+
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script type="module" src="assets/app.js"></script>
+</body>
+</html>

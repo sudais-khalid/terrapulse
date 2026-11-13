@@ -1,0 +1,22 @@
+# Secrets - never commit
+.env
+.netrc
+_netrc
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Raw / cached data (large). Processed web assets in web/data/ ARE committed.
+cache/
+dist/
+*.zip
+data_raw/
+*.h5
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/

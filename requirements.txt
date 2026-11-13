@@ -1,0 +1,9 @@
+# TerraPulse pipeline (Python 3.10+)
+asf_search>=8.0
+fsspec>=2024.6
+aiohttp>=3.9
+requests>=2.31
+h5py>=3.10
+numpy>=1.26
+scipy>=1.11
+pillow>=10.0

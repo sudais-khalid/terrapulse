@@ -1,0 +1,154 @@
+"""Write web-ready layers: Web Mercator 8-bit PNGs, a coarse time-series stack and a manifest."""
+from __future__ import annotations
+
+import json
+import math
+from pathlib import Path
+
+import numpy as np
+from PIL import Image
+
+from .config import DATA_GAP, Site
+from .geo import lonlat_to_merc, lonlat_to_utm, merc_to_lonlat
+from .ingest import Grid
+from .products import RHYTHM_CLASSES, Stack
+
+# dB quantisation shared with the web app: value = 1 + round((dB - DB_MIN) / DB_STEP), 0 = no data.
+DB_MIN, DB_MAX = -35.0, 5.0
+DB_STEP = (DB_MAX - DB_MIN) / 254
+
+
+def quantize_db(a: np.ndarray) -> np.ndarray:
+    q = np.zeros(a.shape, np.uint8)
+    ok = np.isfinite(a)
+    q[ok] = (1 + np.round((np.clip(a[ok], DB_MIN, DB_MAX) - DB_MIN) / DB_STEP)).astype(np.uint8)
+    return q
+
+
+class MercatorWarp:
+    """Nearest-neighbour lookup from a Web Mercator output grid into the UTM analysis grid."""
+
+    def __init__(self, site: Site, grid: Grid):
+        w, s, e, n = site.bbox
+        lat_c = (s + n) / 2
+        self.res = grid.res / math.cos(math.radians(lat_c))  # mercator metres per pixel
+        mx0, my0 = lonlat_to_merc(w, s)
+        mx1, my1 = lonlat_to_merc(e, n)
+        self.width = int(round((float(mx1) - float(mx0)) / self.res))
+        self.height = int(round((float(my1) - float(my0)) / self.res))
+        self.mx0, self.my1 = float(mx0), float(my1)
+        mx = self.mx0 + (np.arange(self.width) + 0.5) * self.res
+        my = self.my1 - (np.arange(self.height) + 0.5) * self.res
+        MX, MY = np.meshgrid(mx, my)
+        lon, lat = merc_to_lonlat(MX, MY)
+        ux, uy = lonlat_to_utm(lon, lat, grid.epsg)
+        c = np.floor((ux - grid.x0) / grid.res).astype(np.int64)
+        r = np.floor((grid.y1 - uy) / grid.res).astype(np.int64)
+        self.inside = (r >= 0) & (r < grid.height) & (c >= 0) & (c < grid.width)
+        self.r, self.c = np.clip(r, 0, grid.height - 1), np.clip(c, 0, grid.width - 1)
+        lon_w, lat_n = merc_to_lonlat(self.mx0, self.my1)
+        lon_e, lat_s = merc_to_lonlat(self.mx0 + self.width * self.res, self.my1 - self.height * self.res)
+        self.corners = [[float(lon_w), float(lat_n)], [float(lon_e), float(lat_n)],
+                        [float(lon_e), float(lat_s)], [float(lon_w), float(lat_s)]]
+
+    def __call__(self, a: np.ndarray, fill=0):
+        out = a[self.r, self.c]
+        out = np.where(self.inside, out, fill)
+        return out.astype(a.dtype)
+
+
+def save_png(a: np.ndarray, path: Path, palette: list[str] | None = None) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    im = Image.fromarray(a.astype(np.uint8), mode="L")
+    if palette:
+        # Palette entries are #RRGGBB or #RRGGBBAA; index 0 is always transparent (no data).
+        im = Image.frombytes("P", im.size, a.astype(np.uint8).tobytes())
+        pal, alpha = [0, 0, 0] * 256, [255] * 256
+        for i, hexc in enumerate(palette):
+            h = hexc.lstrip("#")
+            pal[3 * i: 3 * i + 3] = [int(h[k:k + 2], 16) for k in (0, 2, 4)]
+            alpha[i] = int(h[6:8], 16) if len(h) == 8 else 255
+        alpha[0] = 0
+        im.putpalette(pal)
+        last = max(i for i in range(256) if i < len(palette)) + 1
+        im.save(path, optimize=True, transparency=bytes(alpha[:last]))
+        return
+    im.save(path, optimize=True)
+
+
+def export(stack: Stack, res: dict, site: Site, out: Path, rain: dict | None = None,
+           stack_factor: int = 4, log=print) -> Path:
+    out.mkdir(parents=True, exist_ok=True)
+    warp = MercatorWarp(site, stack.grid)
+    T = len(stack.dates)
+    log(f"  web grid: {warp.width} x {warp.height} px, {warp.res:.0f} m mercator")
+
+    # Per-date backscatter and classes.
+    for t, d in enumerate(stack.dates):
+        save_png(warp(quantize_db(res["hh"][t])), out / "dates" / f"{d}_hh.png")
+        save_png(warp(quantize_db(res["hv"][t])), out / "dates" / f"{d}_hv.png")
+        save_png(warp(res["classes"][t]), out / "dates" / f"{d}_class.png",
+                 palette=["#000000", "#00000000", "#1f6fd1", "#b04fd6"])
+
+    def pct(a):
+        q = np.zeros(a.shape, np.uint8)
+        ok = np.isfinite(a)
+        q[ok] = 1 + np.round(np.clip(a[ok], 0, 1) * 100).astype(np.uint8)
+        return q
+
+    def scaled(a, lo, hi):
+        q = np.zeros(a.shape, np.uint8)
+        ok = np.isfinite(a)
+        q[ok] = 1 + np.round((np.clip(a[ok], lo, hi) - lo) / (hi - lo) * 254).astype(np.uint8)
+        return q
+
+    save_png(warp(pct(res["occurrence"])), out / "products" / "water_occurrence.png")
+    save_png(warp(pct(res["flood_freq"])), out / "products" / "flooded_veg_frequency.png")
+    save_png(warp(scaled(res["hv_range"], 0, 15)), out / "products" / "hv_range.png")
+    save_png(warp(quantize_db(res["hh_med"])), out / "products" / "hh_median.png")
+    save_png(warp(quantize_db(res["hv_med"])), out / "products" / "hv_median.png")
+    save_png(warp(res["rhythm"]), out / "products" / "rhythm.png",
+             palette=["#000000"] + [c[3] for c in RHYTHM_CLASSES])
+
+    # Coarse stack for click-anywhere time series: uint8 [T][2][h][w].
+    f = stack_factor
+    hq = np.stack([warp(quantize_db(res["hh"][t])) for t in range(T)])
+    vq = np.stack([warp(quantize_db(res["hv"][t])) for t in range(T)])
+    h2, w2 = warp.height // f, warp.width // f
+
+    def down(q):
+        # Mean in dB of valid cells per block (0 = no data).
+        v = q[:, : h2 * f, : w2 * f].reshape(T, h2, f, w2, f).astype(np.float32)
+        m = v > 0
+        s = (v * m).sum((2, 4))
+        n = m.sum((2, 4))
+        o = np.zeros((T, h2, w2), np.uint8)
+        o[n > 0] = np.round(s[n > 0] / n[n > 0]).astype(np.uint8)
+        return o
+
+    series = np.stack([down(hq), down(vq)], axis=1)  # T,2,h,w
+    (out / "stack.bin").write_bytes(series.tobytes())
+
+    manifest = {
+        "version": 1,
+        "site": {"key": site.key, "name": site.name, "country": site.country, "bbox": site.bbox,
+                 "track": site.track, "frame": site.frame, "direction": site.direction},
+        "image": {"width": warp.width, "height": warp.height, "corners": warp.corners,
+                  "res_m": site.res_m, "mercator_res_m": round(warp.res, 2)},
+        "stack": {"file": "stack.bin", "factor": f, "width": w2, "height": h2, "order": "T,pol(hh,hv),y,x"},
+        "db_quant": {"min": DB_MIN, "max": DB_MAX, "step": DB_STEP, "nodata": 0},
+        "dates": [{"date": d, "maturity": ("VALIDATED" if m.get("collection") == "NISAR_L2_GCOV_V1" else "PROVISIONAL"),
+                   "core": m.get("core"), "crid": m.get("crid"), "mode": m.get("mode"), "pol": m.get("pol"),
+                   "spacing_m": m.get("spacing_m"), "scene": m.get("scene")} for d, m in zip(stack.dates, stack.meta)],
+        "data_gap": DATA_GAP,
+        "params": res["params"],
+        "classes": {"0": "no data", "1": "land", "2": "open water", "3": "flooded vegetation (likely)"},
+        "rhythm_classes": [{"code": c[0], "label": c[1], "dance": c[2], "color": c[3]} for c in RHYTHM_CLASSES],
+        "zones": res["zones"],
+        "zone_boxes": {z.key: {"name": z.name, "bbox": z.bbox, "kind": z.kind, "note": z.note} for z in site.zones},
+        "rain": rain,
+    }
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=1))
+    size = sum(p.stat().st_size for p in out.rglob("*") if p.is_file()) / 1e6
+    log(f"  wrote {out} ({size:.1f} MB)")
+    return out
