@@ -16,6 +16,9 @@ dist/
 data_raw/
 *.h5
 
+# Local Claude Code settings and hooks (machine-specific)
+.claude/
+
 # OS / editor
 .DS_Store
 Thumbs.db
