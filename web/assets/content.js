@@ -29,8 +29,27 @@ const day = (d) => new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { day:
 const median = (a) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : 0; };
 const monthName = (d) => new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { month: "long", timeZone: "UTC" });
 
-// The cloudiest monsoon pass in optical imagery (checked against NASA MODIS true colour).
-const CLOUDY_PASS = { "lower-indus": "2026-07-07" };
+// The cloudiest pass in optical imagery, checked against NASA MODIS Terra true colour (GIBS):
+// about 65% cloud over the Indus delta on 7 July 2026, 96% cloud and haze over Manaus on 2 November 2026.
+const CLOUDY_PASS = { "lower-indus": "2026-07-07", "amazon-manaus": "2026-11-02" };
+
+// Daily rain helpers (mm, area mean over the whole study area).
+const addDays = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 864e5).toISOString().slice(0, 10);
+function rainBetween(m, from, to) {
+  const s = m.rain?.series?.all;
+  if (!s) return null;
+  let total = 0, best = [0, null];
+  for (let d = addDays(from, 1); d <= to; d = addDays(d, 1)) {
+    const v = s[d] ?? 0;
+    total += v;
+    const two = v + (s[addDays(d, 1)] ?? 0);
+    if (addDays(d, 1) <= to && two > best[0]) best = [two, d];
+  }
+  return { total, peak2: best[0], peakDay: best[1] };
+}
+const rainName = (m) => (m.rain?.source?.includes("IMERG") ? "NASA's GPM IMERG" : "NASA POWER");
+const shortDay = (d) => new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "long", timeZone: "UTC" });
+const reliable = (m) => m.zones.all.series.map((s, i) => [s, i]).filter(([s, i]) => s && !m.dates[i].wind_roughened && !m.dates[i].rain_affected);
 
 export function buildStory(m) {
   return m.site.key === "lower-indus" ? storyIndus(m) : storyGeneric(m);
@@ -40,55 +59,71 @@ export function buildStory(m) {
 function storyGeneric(m) {
   const dates = m.dates.map((d) => d.date);
   const first = dates[0], last = dates[dates.length - 1];
-  const all = m.zones.all.series;
-  const ok = all.map((s, i) => [s, i]).filter(([s, i]) => s && !m.dates[i].wind_roughened);
-  const wFirst = ok[0][0].water_km2, wLast = ok[ok.length - 1][0].water_km2;
-  const fFirst = ok[0][0].flooded_veg_km2, fLast = ok[ok.length - 1][0].flooded_veg_km2;
+  const ok = reliable(m);
   const wMax = ok.reduce((a, b) => (b[0].water_km2 > a[0].water_km2 ? b : a));
-  const wMin = ok.reduce((a, b) => (b[0].water_km2 < a[0].water_km2 ? b : a));
-  const zones = Object.entries(m.zones).filter(([k, z]) => k !== "all" && ["wetland", "river", "lake"].includes(z.kind));
+  const peak = dates[wMax[1]];
+  const wPeak = wMax[0].water_km2, wLast = m.zones.all.series[dates.length - 1].water_km2;
+  const fMax = ok.reduce((a, b) => (b[0].flooded_veg_km2 > a[0].flooded_veg_km2 ? b : a));
+  const fLast = m.zones.all.series[dates.length - 1].flooded_veg_km2;
+  const iPeak = wMax[1], iLast = dates.length - 1;
+  const zones = Object.entries(m.zones).filter(([k, z]) => k !== "all" && k !== m.site.water_ref && ["wetland", "river", "lake"].includes(z.kind));
   const biggest = zones.map(([k, z]) => {
-    const s = z.series.filter(Boolean);
-    return s.length > 1 ? [z.name, s[s.length - 1].water_km2 - s[0].water_km2, s[s.length - 1].flooded_veg_km2 - s[0].flooded_veg_km2] : null;
+    const a = z.series[iPeak], b = z.series[iLast];
+    return a && b ? [z.name, b.water_km2 - a.water_km2, a.water_km2] : null;
   }).filter(Boolean).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))[0];
   const ref = m.zone_boxes[m.site.water_ref]?.name;
-  const dir = (a, b) => (b < a ? "fell" : "rose");
+  const pct = (a, b) => Math.round((Math.abs(b - a) / Math.max(a, 1e-9)) * 100);
+  const rain = peak < last ? rainBetween(m, peak, last) : null;
+  const wet = m.dates.filter((d) => d.rain_affected);
+  const cloudy = dates.includes(CLOUDY_PASS[m.site.key]) ? CLOUDY_PASS[m.site.key] : null;
   const isAmazon = m.site.key === "amazon-manaus";
-  return [
+  const chapters = [
     {
       kicker: `${m.dates.length} radar passes, ${m.site.name}, ${m.site.country}`,
       title: isAmazon ? "Where two rivers dance" : m.site.name,
       body: isAmazon
-        ? `<p>At Manaus the black waters of the Rio Negro meet the muddy Solimoes and run side by side for kilometres before mixing into the Amazon. Around them, forests stand in water for months each year.</p>
-           <p>NISAR imaged this reach ${m.dates.length} times between ${day(first)} and ${day(last)}, through the clouds that cover the rainforest most days.</p>`
+        ? `<p>At Manaus the black waters of the Rio Negro meet the muddy Solimões and run side by side for kilometres before mixing into the Amazon. Around them, forests stand in water for months each year.</p>
+           <p>NISAR imaged this reach ${m.dates.length} times between ${day(first)} and ${day(last)}, from high water into the low-water season.</p>
+           <p>In this radar colour image the forest is green, the city pink and white, and the rivers and lakes black.</p>`
         : `<p>NISAR imaged this area ${m.dates.length} times between ${day(first)} and ${day(last)}.</p>`,
       view: { bbox: m.site.bbox }, layer: "radar", date: first,
     },
-    {
-      kicker: "The flood pulse",
-      title: isAmazon ? "The river breathes out" : "Water you can count",
-      body: `<p>Open water across the area ${dir(wFirst, wLast)} from ${km(wFirst)} km² on ${day(first)} to ${km(wLast)} km² on ${day(last)}. It peaked at ${km(wMax[0].water_km2)} km² on ${day(dates[wMax[1]])} and was lowest at ${km(wMin[0].water_km2)} km² on ${day(dates[wMin[1]])}.</p>
-             ${isAmazon ? `<p>At Manaus the river typically crests in June or July and drops to its lowest in October or November, a swing of about ten metres. Drag the divider: left is ${day(first)}, right is ${day(last)}.</p>` : ""}
-             ${biggest ? `<div class="fig"><b>${biggest[1] >= 0 ? "+" : ""}${km(biggest[1])} km²</b><span>open water change in ${biggest[0]}, the biggest mover</span></div>` : ""}
-             ${ref ? `<p class="src">Water thresholds calibrated on ${ref}.</p>` : ""}`,
-      view: { bbox: m.site.bbox }, layer: "water", date: last, compare: first,
-    },
-    {
-      kicker: "What L-band adds",
-      title: isAmazon ? "Forests standing in water" : "Water under the canopy",
-      body: `<p>When a forest floods, NISAR's 24 cm waves pass through the canopy, hit the water and bounce back off the trunks. Flooded forest shines in HH.</p>
-             <div class="fig"><b>${km(fFirst)} → ${km(fLast)} km²</b><span>likely flooded vegetation, ${monthName(first)} to ${monthName(last)}</span></div>
-             <p>Purple marks where the radar brightened sharply against that place's own normal level. Drag the divider, ${day(first)} on the left and ${day(last)} on the right, to see how much remains as the water drains from under the trees.</p>`,
-      view: { bbox: m.site.bbox }, layer: "water", date: last, compare: first,
-    },
-    {
-      kicker: "Every place has a rhythm",
-      title: "The floodplain's dance",
-      body: `<p>TerraPulse groups every 100 m cell by how its radar signal moved across these passes. Rivers and lakes hold still, the floodplain swirls as water comes and goes, and the upland forest sways slowly.</p>
-             <p>Switch sites at the top to compare this rhythm with the lower Indus, or open Explore.</p>`,
-      view: { bbox: m.site.bbox }, layer: "rhythm",
-    },
   ];
+  if (cloudy) chapters.push({
+    kicker: "Why radar",
+    title: "Clouds can't hide the river",
+    body: `<p>On ${day(cloudy)} NASA's MODIS camera saw this whole area under cloud and haze. NISAR, passing the same day, mapped every river channel, lake and flooded patch underneath.</p>
+           <p>Drag the divider: left is NISAR's water map, right is the optical image from the same day. In the humid tropics clear optical views can be rare for weeks; radar does not need them.</p>
+           <p class="src">Optical: MODIS Terra corrected reflectance, NASA GIBS.</p>`,
+    view: { bbox: m.site.bbox }, layer: "water", date: cloudy, compareWith: "optical",
+  });
+  chapters.push({
+    kicker: "The flood pulse",
+    title: isAmazon ? "The river breathes out" : "Water you can count",
+    body: `<p>Open water across the area peaked at ${km(wPeak)} km² on ${day(peak)} and ${wLast < wPeak ? "fell" : "stood"} to ${km(wLast)} km² by ${day(last)}${wLast < wPeak ? `, ${pct(wPeak, wLast)}% less` : ""}.</p>
+           ${biggest ? `<div class="fig"><b>${biggest[1] >= 0 ? "+" : ""}${km(biggest[1])} km²</b><span>open water in ${biggest[0]}, ${biggest[1] < 0 ? "down" : "up"} ${pct(biggest[2], biggest[2] + biggest[1])}% from high water</span></div>` : ""}
+           ${isAmazon && rain ? `<p>${rainName(m)} measured ${Math.round(rain.total)} mm of rain over the area between those two passes, yet the water kept draining. The Amazon's level is set by rain over its whole upstream basin, weeks to months earlier, not by local showers. At Manaus the river usually crests in June or July and is lowest in October or November.</p>` : ""}
+           <p>Drag the divider: left is ${day(peak)}, right is ${day(last)}.</p>
+           ${ref ? `<p class="src">Water thresholds calibrated on ${ref} (water) and ${m.zone_boxes[m.site.dry_ref]?.name || "dry land"}.</p>` : ""}`,
+    view: { bbox: m.site.bbox }, layer: "water", date: last, compare: peak,
+  });
+  chapters.push({
+    kicker: "What L-band adds",
+    title: isAmazon ? "Forests standing in water" : "Water under the canopy",
+    body: `<p>When a forest floods, NISAR's 24 cm waves pass through the canopy, hit the water and bounce back off the trunks. Flooded forest shines in HH.</p>
+           <div class="fig"><b>${km(fMax[0].flooded_veg_km2)} → ${km(fLast)} km²</b><span>likely flooded vegetation, ${day(dates[fMax[1]])} to ${day(last)}</span></div>
+           <p>Purple marks where the radar brightened sharply against that place's own normal level. Drag the divider to see it vanish as the water drains from under the trees.</p>
+           ${wet.length ? `<p>One trap: on ${wet.map((d) => `${day(d.date)}, after ${Math.round(d.rain_3d_mm)} mm of rain in three days`).join("; ")}, wet canopies brightened and briefly mimicked flooding. TerraPulse flags such passes as <i>rain</i> in the strip and leaves them out of its peaks and alerts.</p>` : ""}`,
+    view: { bbox: m.site.bbox }, layer: "water", date: last, compare: dates[fMax[1]],
+  });
+  chapters.push({
+    kicker: "Every place has a rhythm",
+    title: "The floodplain's dance",
+    body: `<p>TerraPulse groups every 100 m cell by how its radar signal moved across these passes. Rivers and lakes hold still, the floodplain swirls as water comes and goes, and the upland forest sways slowly.</p>
+           <p>Switch sites at the top to compare this rhythm with the lower Indus, or open Explore.</p>`,
+    view: { bbox: m.site.bbox }, layer: "rhythm",
+  });
+  return chapters;
 }
 
 function storyIndus(m) {
@@ -96,7 +131,7 @@ function storyIndus(m) {
   const all = m.zones.all.series;
   const idx = (d) => Math.max(0, dates.indexOf(d));
   // Extremes skip passes where wind roughened the water (the reference lake stopped looking like water).
-  const valid = all.map((s, i) => [s, i]).filter(([s, i]) => s && !m.dates[i].wind_roughened);
+  const valid = reliable(m);
   const windy = m.dates.filter((d) => d.wind_roughened).map((d) => d.date);
   const wMax = valid.reduce((a, b) => (b[0].water_km2 > a[0].water_km2 ? b : a));
   const wMin = valid.reduce((a, b) => (b[0].water_km2 < a[0].water_km2 ? b : a));
@@ -112,6 +147,7 @@ function storyIndus(m) {
   const lagoonDelta = (zs("badin-lagoons", after, "water_km2") ?? 0) - (zs("badin-lagoons", before, "water_km2") ?? 0);
   const floodDelta = (zs("all", after, "flooded_veg_km2") ?? 0) - (zs("all", before, "flooded_veg_km2") ?? 0);
   const monthOf = (d) => new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { month: "long", timeZone: "UTC" });
+  const aug = rainBetween(m, before, after);
 
   return [
     {
@@ -150,9 +186,10 @@ function storyIndus(m) {
       kicker: "Monsoon 2026",
       title: "After the August rain",
       body: `<p>In early August 2026 a heavy monsoon spell hit Hyderabad, Badin and Thatta, and canals breached in Badin. NISAR happened to be off at that moment (a permanent instrument gap from 27 July to 10 August), but it imaged the area on ${day(before)} and again on ${day(after)}.</p>
+             ${aug && aug.total >= 1 ? `<p>${rainName(m)} measured ${Math.round(aug.total)} mm of rain averaged over the study area between the two passes, ${Math.round(aug.peak2)} mm of it on ${shortDay(aug.peakDay)} and ${shortDay(addDays(aug.peakDay, 1))}.</p>` : ""}
              <div class="fig"><b>${lagoonDelta >= 0 ? "+" : ""}${km(lagoonDelta)} km²</b><span>open water in the Badin coastal lagoons between the two passes</span></div>
              <p>Drag the divider: left is ${day(before)}, right is ${day(after)}. Blue is open water. Purple, which grew by ${km(floodDelta)} km², marks fields where the radar brightened sharply: water standing under a crop.</p>
-             <p class="src">Rain reports: Sindh PDMA situation reports, July and August 2026.</p>`,
+             <p class="src">Rain: ${m.rain?.source || "not loaded"}; Sindh PDMA situation reports, July and August 2026.</p>`,
       view: { center: [68.62, 24.62], zoom: 9.1 }, layer: "water", date: after, compare: before,
     },
     {
@@ -186,6 +223,11 @@ export function learnHTML(m) {
   const z = (k) => m.zone_boxes[k]?.name || k;
   const indus = m.site.key === "lower-indus";
   const rain = m.rain?.source || "no rainfall data loaded";
+  const modes = [...new Set(m.dates.map((d) => d.mode))];
+  const nVal = m.dates.filter((d) => d.maturity === "VALIDATED").length;
+  const fr = m.params.reference_lake_water_frac?.filter((v) => v != null) || [];
+  const frTxt = fr.length ? `${Math.round(Math.min(...fr) * 100)}% to ${Math.round(Math.max(...fr) * 100)}%` : "";
+  const wet = m.dates.filter((d) => d.rain_affected).map((d) => d.date);
   return `
 <h2>How it works</h2>
 <p>TerraPulse reads radar from <b>NISAR</b>, the NASA and ISRO Synthetic Aperture Radar satellite launched in July 2025. It images nearly all land every 12 days, day or night, through clouds.</p>
@@ -204,12 +246,13 @@ export function learnHTML(m) {
 
 <h3>What we did with the data</h3>
 <ul>
-  <li><b>Data:</b> NISAR Level-2 GCOV (radiometrically terrain corrected gamma-naught), track ${m.site.track}, frame ${m.site.frame}, from the ASF DAAC. The core series uses one processing version (PROVISIONAL, CRID P05023) so changes are not artefacts of software updates. The newest pass comes from the VALIDATED collection and is marked in the strip.</li>
+  <li><b>Data:</b> NISAR Level-2 GCOV (radiometrically terrain corrected gamma-naught), track ${m.site.track}, frame ${m.site.frame}, from the ASF DAAC. The core series uses one processing version (PROVISIONAL, CRID P05023) so changes are not artefacts of software updates. ${nVal === 1 ? "The newest pass comes from the VALIDATED collection (CRID P05036) and is marked in the strip." : nVal > 1 ? `The newest ${nVal} passes come from the VALIDATED collection (CRID P05036) and are marked in the strip.` : ""}</li>
   <li><b>Streaming:</b> only the study area is read from each 6 GB file, by fetching the compressed HDF5 chunks we need in parallel.</li>
-  <li><b>Quality mask:</b> samples NISAR flags as invalid (partially focused radar data in swath gaps) are dropped; on 20 MHz passes this removes about 16% of the area, shown in grey.</li>
+  <li><b>Quality mask:</b> samples NISAR flags as invalid (partially focused radar data in swath gaps) are dropped; ${modes.includes("2005") ? "on 20 MHz passes this removes about 16% of the area, " : ""}shown in grey.</li>
   <li><b>Grid:</b> 10 m and 20 m pixels are averaged to 100 m, which also suppresses speckle.</li>
-  <li><b>Open water:</b> HH and HV both below thresholds that best separate ${z(m.site.water_ref)} (water) from ${z(m.site.dry_ref)} (dry land), chosen separately for each radar mode because the 40 MHz mode reads dark surfaces about 1 dB brighter. A pixel that turns at least 3 dB darker than its own median in both channels also counts as newly flooded.${indus ? " Haleji Lake, not used for calibration, stays at a steady size: an independent check." : ""}</li>
+  <li><b>Open water:</b> HH and HV both below thresholds that best separate ${z(m.site.water_ref)} (water) from ${z(m.site.dry_ref)} (dry land), ${modes.length > 1 ? "chosen separately for each radar mode because the 40 MHz mode reads dark surfaces about 1 dB brighter." : "for this site's single radar mode."} A pixel that turns at least 3 dB darker than its own median in both channels also counts as newly flooded.${indus ? " Haleji Lake, not used for calibration, stays at a steady size: an independent check." : ""}</li>
   <li><b>Wind check:</b> if less than 70% of ${z(m.site.water_ref)} reads as water on a pass, wind has roughened the water and that pass is flagged.</li>
+  <li><b>Rain check:</b> a pass with at least ${m.params.rain_affected_mm_3d ?? 15} mm of rain over the area in the three days before it is flagged <i>rain</i>: wet canopies and soil brighten HH and roughen water.${wet.length ? ` Flagged here: ${wet.join(", ")}.` : " No pass is flagged at this site."}</li>
   <li><b>Flooded vegetation (likely):</b> HH at least 3 dB above that pixel's own median, rising more than HV, and bright overall, excluding built-up areas.</li>
   <li><b>Change:</b> log ratio between any two dates, sorted into new water, receding water, brighter HH, more or less vegetation.</li>
   <li><b>Surface rhythm:</b> k-means clustering of each pixel's yearly statistics, named by physical rules.</li>
@@ -219,11 +262,11 @@ export function learnHTML(m) {
 
 <h3>Limits to keep in mind</h3>
 <ul>
-  <li>Wind can roughen water and hide it.${indus ? " Smooth dry desert can look like water: in the Jhimpir check area 12 to 17% of desert pixels pass the water test, so small scattered blue specks on dry land are not reliable." : ""}</li>
-  <li>A sharp HH rise can mean very wet soil rather than standing water.</li>
+  <li>Wind can roughen water and hide it.${frTxt ? ` Across all passes, ${z(m.site.water_ref)} read as water over ${frTxt} of its open-water core.` : ""}${indus ? " Smooth dry desert can look like water: in the Jhimpir check area 12 to 17% of desert pixels pass the water test, so small scattered blue specks on dry land are not reliable." : ""}</li>
+  <li>A sharp HH rise can mean very wet soil or a rain-soaked canopy rather than standing water.</li>
   <li>Radio interference can create bright blobs on single dates.</li>
-  <li>NISAR had a permanent data gap from 27 July to 10 August 2026.</li>
-  <li>Rainfall is averaged over grid cells about 10 km (IMERG) to 50 km (POWER) wide and can miss very local storms.</li>
+  <li>NISAR had a permanent data gap from 27 July to 10 August 2026.${m.site.key === "amazon-manaus" ? " At Manaus the series starts in June 2026, so the rising limb of the flood is not covered." : ""}</li>
+  <li>Rainfall is averaged over grid cells about 10 km (IMERG) to 50 km (POWER) wide and can miss very local storms.${m.rain?.caveat ? " " + m.rain.caveat : ""}</li>
   <li>The PROVISIONAL products are calibrated but still being validated by the mission.</li>
 </ul>
 

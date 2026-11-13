@@ -14,6 +14,21 @@
    "passes": 28,
    "first": "2025-11-21",
    "last": "2026-10-23"
+  },
+  {
+   "key": "amazon-manaus",
+   "name": "Amazon at Manaus",
+   "country": "Brazil",
+   "tagline": "The flood pulse of the Amazon",
+   "bbox": [
+    -60.25,
+    -3.45,
+    -59.45,
+    -2.88
+   ],
+   "passes": 10,
+   "first": "2026-06-23",
+   "last": "2026-11-02"
   }
  ]
 }

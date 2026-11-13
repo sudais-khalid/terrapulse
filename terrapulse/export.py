@@ -16,6 +16,8 @@ from .products import RHYTHM_CLASSES, Stack
 # dB quantisation shared with the web app: value = 1 + round((dB - DB_MIN) / DB_STEP), 0 = no data.
 DB_MIN, DB_MAX = -35.0, 5.0
 DB_STEP = (DB_MAX - DB_MIN) / 254
+# A pass with at least this much rain (area mean, mm) over the pass day and the two days before is flagged.
+RAIN_AFFECTED_MM = 15.0
 
 
 def quantize_db(a: np.ndarray) -> np.ndarray:
@@ -162,6 +164,20 @@ def export(stack: Stack, res: dict, site: Site, out: Path, rain: dict | None = N
         "zone_boxes": {z.key: {"name": z.name, "bbox": z.bbox, "kind": z.kind, "note": z.note} for z in site.zones},
         "rain": rain,
     }
+    # Rain-affected passes: heavy rain in the three days before a pass wets canopies and soil
+    # (HH brightens, can mimic flooded vegetation) and roughens water, so they are flagged.
+    daily = ((rain or {}).get("series") or {}).get("all") or {}
+    if daily:
+        from datetime import date as _date, timedelta
+        for e in manifest["dates"]:
+            d0 = _date.fromisoformat(e["date"])
+            vals = [daily.get(str(d0 - timedelta(days=k))) for k in range(3)]
+            vals = [v for v in vals if v is not None]
+            e["rain_3d_mm"] = round(sum(vals), 1) if vals else None
+            e["rain_affected"] = bool(vals and sum(vals) >= RAIN_AFFECTED_MM)
+        flagged = [e["date"] for e in manifest["dates"] if e.get("rain_affected")]
+        manifest["params"]["rain_affected_mm_3d"] = RAIN_AFFECTED_MM
+        log(f"  rain-affected passes (>= {RAIN_AFFECTED_MM} mm in 3 days): {flagged}")
     manifest["site"]["tagline"] = site.tagline
     manifest["site"]["water_ref"] = site.water_ref
     manifest["site"]["dry_ref"] = site.dry_ref

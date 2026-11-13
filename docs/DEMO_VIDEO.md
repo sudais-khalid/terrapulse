@@ -17,4 +17,4 @@ Shareable starting points (replace the base address with your GitHub Pages addre
 
 - Clouds chapter: `index.html#site=lower-indus&mode=story&ch=3`
 - Rice chapter: `index.html#site=lower-indus&mode=story&ch=6`
-- Manaus: `index.html#site=amazon-manaus&mode=story&ch=1`
+- Manaus flood pulse: `index.html#site=amazon-manaus&mode=story&ch=3`

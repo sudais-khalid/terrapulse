@@ -55,7 +55,8 @@ TerraPulse answers three questions for any NISAR study area: where is water now,
 - Across the early August 2026 monsoon rain, the Badin coastal lagoons gained about 62 km² of open water (19 July to 12 August).
 - On 7 July 2026 MODIS saw mostly cloud over the delta while NISAR mapped the flooded fields beneath.
 - 14 April 2026 is flagged as wind-roughened: only 13% of Keenjhar Lake looked like water.
-- Amazon at Manaus: `<add one line after the Manaus run, for example the change in open water and flooded forest between June and November>`.
+- Amazon at Manaus (10 passes, 23 Jun to 2 Nov 2026): open water fell 20%, from 1,002 km² on 5 July to 800 km² on 2 November, as the river dropped toward low water. The Careiro várzea floodplain lost 42% of its open water, and flooded forest fell from about 50 km² to almost none. GPM IMERG recorded 175 mm of local rain over the same period, showing that the flood pulse is driven by the whole upstream basin. Water thresholds were calibrated on the Rio Negro against Reserva Ducke rainforest, which reads 0 km² of water on every pass.
+- On 27 September 2026 at Manaus, 24 mm of rain in three days wet the canopy and briefly mimicked flooded forest. TerraPulse flags such passes automatically from IMERG and leaves them out of peaks and alerts.
 
 **Benefits and intended impact**
 

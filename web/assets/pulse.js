@@ -127,7 +127,7 @@ export class Pulse {
       wp.forEach(([px, py]) => el("circle", { cx: px, cy: py, r: 2.6, class: "dot" }, svg));
     }
 
-    // Pass ticks; wind-roughened passes get a small marker because their water totals read low.
+    // Pass ticks; wind-roughened and rain-affected passes get a small marker because their totals are less reliable.
     this.times.forEach((t, i) => {
       el("line", { x1: x(t), x2: x(t), y1: base, y2: base + 5, class: "tick" + (this.dates[i].maturity === "VALIDATED" ? " validated" : "") }, svg);
       if (this.dates[i].wind_roughened) {
@@ -135,6 +135,11 @@ export class Pulse {
         m.textContent = "wind";
         const tip = el("title", {}, m);
         tip.textContent = "Wind-roughened water on this pass: lakes partly looked like land, so open water reads low.";
+      } else if (this.dates[i].rain_affected) {
+        const m = el("text", { x: x(t), y: base - 4, class: "wind-mark", "text-anchor": "middle" }, svg);
+        m.textContent = "rain";
+        const tip = el("title", {}, m);
+        tip.textContent = `Heavy rain (${this.dates[i].rain_3d_mm} mm) in the three days before this pass: wet canopies and soil brighten HH and can read as flooded vegetation.`;
       }
     });
 

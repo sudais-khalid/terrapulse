@@ -62,6 +62,8 @@ function makeMap(container) {
   const map = new maplibregl.Map({ container, style: baseStyle(), center: [0, 20], zoom: 2, attributionControl: { compact: true }, maxZoom: 15 });
   let ready;
   map.ready = new Promise((ok) => (ready = ok));
+  // A newer image replacing one still decoding aborts the old load; that is expected, not an error.
+  map.on("error", (e) => { if (e?.error?.name !== "AbortError") console.error(e?.error || e); });
   map.on("load", () => {
     map.addSource("site", { type: "image", url: BLANK, coordinates: [[0, 1], [1, 1], [1, 0], [0, 0]] });
     map.addLayer({ id: "site", type: "raster", source: "site", paint: { "raster-opacity": state.opacity, "raster-fade-duration": 0, "raster-resampling": "nearest" } }, "labels");
@@ -196,7 +198,7 @@ function updateChrome() {
   const d = M.dates[state.index];
   $("#date-chip").hidden = !L.dated;
   if (L.dated) {
-    const extra = (d.maturity === "VALIDATED" ? " · validated" : "") + (d.wind_roughened ? " · <b>wind-roughened water</b>" : "");
+    const extra = (d.maturity === "VALIDATED" ? " · validated" : "") + (d.wind_roughened ? " · <b>wind-roughened water</b>" : "") + (d.rain_affected ? ` · <b>${d.rain_3d_mm} mm rain in 3 days</b>` : "");
     if (world && state.gibsDate) $("#date-chip").innerHTML = `<b>${niceDate(state.gibsDate)}</b> · NISAR worldwide (NASA GIBS)`;
     else $("#date-chip").innerHTML = state.layer === "change"
       ? `${niceDate(dateOf(iB))} <b>→</b> ${niceDate(d.date)}`
@@ -340,10 +342,10 @@ async function analyseArea(box) {
   const hi = Math.max(1, ...vals) * 1.1;
   const fr = chartFrame($("#insp-chart"), 0, hi, "km²");
   let g = fr.g + `<path d="M${fr.line(w)}" fill="none" stroke="#4a9df8" stroke-width="2"/><path d="M${fr.line(f)}" fill="none" stroke="#c45ad8" stroke-width="1.6" stroke-dasharray="4 3"/>`;
-  res.rows.forEach((r, i) => { if (r.wind) g += `<text x="${fr.x(fr.times[i])}" y="16" text-anchor="middle" fill="#f2c36b" font-family="Martian Mono" font-size="8">wind</text>`; });
+  res.rows.forEach((r, i) => { if (r.wind || r.rain) g += `<text x="${fr.x(fr.times[i])}" y="16" text-anchor="middle" fill="#f2c36b" font-family="Martian Mono" font-size="8">${r.wind ? "wind" : "rain"}</text>`; });
   $("#insp-chart").innerHTML = g;
   $("#insp-coords").textContent = `Box of ${fmtKm(res.areaKm2)} km² · ${box[1].toFixed(3)} to ${box[3].toFixed(3)}, ${box[0].toFixed(3)} to ${box[2].toFixed(3)}`;
-  const ok = res.rows.filter((r) => r.water_km2 != null && !r.wind);
+  const ok = res.rows.filter((r) => r.water_km2 != null && !r.wind && !r.rain);
   const maxW = ok.reduce((a, b) => (b.water_km2 > a.water_km2 ? b : a), ok[0]);
   const minW = ok.reduce((a, b) => (b.water_km2 < a.water_km2 ? b : a), ok[0]);
   const maxF = ok.reduce((a, b) => (b.flooded_veg_km2 > a.flooded_veg_km2 ? b : a), ok[0]);
@@ -455,7 +457,7 @@ async function loadSite(key, { keepView = false } = {}) {
 }
 
 function setupSiteControls() {
-  const opts = M.dates.map((d, i) => `<option value="${i}">${d.date}${d.maturity === "VALIDATED" ? " (validated)" : ""}${d.wind_roughened ? " (wind)" : ""}</option>`).join("");
+  const opts = M.dates.map((d, i) => `<option value="${i}">${d.date}${d.maturity === "VALIDATED" ? " (validated)" : ""}${d.wind_roughened ? " (wind)" : ""}${d.rain_affected ? " (rain)" : ""}</option>`).join("");
   $("#date-a").innerHTML = opts;
   $("#date-b").innerHTML = opts;
   const thr = $("#thr");
@@ -487,7 +489,7 @@ function updatePulseZone() {
   $("#pulse-title").textContent = `Open water, ${k === "all" ? "whole study area" : z.name}`;
   const rain = M.rain?.series?.[k] || M.rain?.series?.all || null;
   const src = M.rain?.source?.includes("IMERG") ? "GPM IMERG" : M.rain ? "NASA POWER" : "none";
-  $("#pulse-sub").textContent = `blue: open water km² · dashed purple: flooded vegetation · bars: daily rain (${src}) · hatched: NISAR data gap · wind: lakes roughened by wind`;
+  $("#pulse-sub").textContent = `blue: open water km² · dashed purple: flooded vegetation · bars: daily rain (${src}) · hatched: NISAR data gap${M.dates.some((d) => d.wind_roughened) ? " · wind: lakes roughened by wind" : ""}${M.dates.some((d) => d.rain_affected) ? " · rain: heavy rain just before the pass" : ""}`;
   pulse.setData(z.series, rain);
 }
 

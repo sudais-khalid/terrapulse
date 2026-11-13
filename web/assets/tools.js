@@ -44,7 +44,7 @@ export async function areaSeries(M, fileFor, box, onProgress) {
     const valid = total - nodata;
     const scale = valid > 0.3 * total ? (total / valid) * pxKm2 : null;
     rows.push({
-      date: M.dates[t].date, wind: !!M.dates[t].wind_roughened,
+      date: M.dates[t].date, wind: !!M.dates[t].wind_roughened, rain: !!M.dates[t].rain_affected,
       water_km2: scale == null ? null : +(water * scale).toFixed(2),
       flooded_veg_km2: scale == null ? null : +(flood * scale).toFixed(2),
       valid_frac: +(valid / total).toFixed(3),
@@ -79,7 +79,7 @@ export function zoneRows(M, key) {
       if (dt >= 0 && dt < 12) r12 += mm;
     }
     return {
-      zone: z.name, date: d.date, maturity: d.maturity, radar_mode: d.mode, wind_roughened: d.wind_roughened,
+      zone: z.name, date: d.date, maturity: d.maturity, radar_mode: d.mode, wind_roughened: d.wind_roughened, rain_affected: !!d.rain_affected,
       water_km2: s?.water_km2 ?? null, flooded_veg_km2: s?.flooded_veg_km2 ?? null,
       hh_db: s?.hh_db ?? null, hv_db: s?.hv_db ?? null, valid_frac: s?.valid_frac ?? null, rain_12d_mm: +r12.toFixed(1),
     };
@@ -87,7 +87,7 @@ export function zoneRows(M, key) {
 }
 
 // Largest changes per zone between consecutive passes in the SAME radar mode (like for like:
-// modes differ in noise floor and swath gaps), skipping wind-roughened passes and reference areas.
+// modes differ in noise floor and swath gaps), skipping wind-roughened and rain-affected passes and reference areas.
 export function notableChanges(M, n = 6) {
   const skip = new Set(["all", M.site.dry_ref, M.site.water_ref]);
   const events = [];
@@ -96,7 +96,7 @@ export function notableChanges(M, n = 6) {
     const prevByMode = {};
     z.series.forEach((s, i) => {
       const d = M.dates[i];
-      if (!s || d.wind_roughened || s.valid_frac < 0.6) return;
+      if (!s || d.wind_roughened || d.rain_affected || s.valid_frac < 0.6) return;
       const prev = prevByMode[d.mode];
       const days = prev ? (Date.parse(d.date) - Date.parse(M.dates[prev.i].date)) / 864e5 : Infinity;
       if (prev && days <= 40) {
