@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Live app
+    url: https://sudais-khalid.github.io/terrapulse/
+    about: Try TerraPulse in the browser.
+  - name: NISAR data and documentation (ASF)
+    url: https://asf.alaska.edu/nisar/
+    about: Questions about NISAR products themselves.

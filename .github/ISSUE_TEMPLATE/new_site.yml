@@ -1,0 +1,31 @@
+name: Propose a new study site
+description: Suggest a place where NISAR could show surface change (floods, wetlands, crops, forest)
+labels: [new site]
+body:
+  - type: input
+    id: place
+    attributes:
+      label: Place and country
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: What changes there, and who would use the map?
+    validations:
+      required: true
+  - type: input
+    id: bbox
+    attributes:
+      label: Bounding box (W, S, E, N in degrees)
+      placeholder: 67.70, 24.30, 68.95, 25.50
+  - type: textarea
+    id: refs
+    attributes:
+      label: Calibration references
+      description: A permanent water body (water_ref) and an area that never floods (dry_ref), with rough coordinates.
+  - type: input
+    id: passes
+    attributes:
+      label: NISAR track and frame, if known
+      description: The app's "Find NISAR passes at map centre" tool lists them.
