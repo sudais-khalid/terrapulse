@@ -102,7 +102,7 @@ RHYTHM_CLASSES = [
     (2, "Seasonal water and wetland", "The tide", "#3fa7d6"),
     (3, "Flood-prone vegetation", "The swirl", "#7b5ea7"),
     (4, "Active cropland", "The harvest waltz", "#e0a526"),
-    (5, "Woody vegetation and orchards", "The slow sway", "#2e8b57"),
+    (5, "Woody vegetation, forest and orchards", "The slow sway", "#2e8b57"),
     (6, "Built-up area", "The steady beat", "#d1495b"),
     (7, "Bare soil and desert", "The quiet floor", "#c2b280"),
     (8, "Sparse vegetation and fallow", "The shuffle", "#9aa36b"),
@@ -188,14 +188,14 @@ def compute(stack: Stack, site: Site, log=print) -> dict:
     #    the 95th percentile of its values over all passes as thresholds.
     # Thresholds are calibrated separately per radar mode, because the 40 MHz mode has a
     # higher noise floor and reads dark targets about 1 dB brighter than the 20 MHz mode.
-    ref = next((z for z in site.zones if z.kind == "lake"), None)
+    ref = site.zone(site.water_ref) if site.water_ref else next((z for z in site.zones if z.kind == "lake"), None)
     core = None
     if ref is not None:
         zm = zone_mask(site, stack.grid, ref.bbox)
         core = zm & np.isfinite(hv_med) & (hv_med <= np.nanpercentile(hv_med[zm], 40))
         if core.sum() < 50:
             core = None
-    dry_zone = next((z for z in site.zones if z.kind == "desert"), None)
+    dry_zone = site.zone(site.dry_ref) if site.dry_ref else next((z for z in site.zones if z.kind == "desert"), None)
     dry = zone_mask(site, stack.grid, dry_zone.bbox) if dry_zone else None
     thr, skill = {}, {}
     for m in sorted(set(modes)):

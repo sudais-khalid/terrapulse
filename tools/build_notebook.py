@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PKG = ROOT / "terrapulse"
 OUT = ROOT / "notebooks" / "terrapulse_pipeline.ipynb"
 ORDER = ["__init__.py", "config.py", "geo.py", "remote.py", "catalog.py", "ingest.py",
-         "products.py", "export.py", "rain.py", "__main__.py"]
+         "products.py", "export.py", "rain.py", "rain_imerg.py", "__main__.py"]
 
 
 def md(text: str) -> dict:
@@ -33,14 +33,27 @@ def build() -> dict:
 
 Reading Earth's signals. Revealing its changes.
 
-This notebook turns a year of NISAR L-band radar (GCOV, track 164, frame 76, Lower Sindh, Pakistan) into the map layers used by the TerraPulse web app.
+This notebook turns NISAR L-band radar time series (GCOV) into the map layers used by the TerraPulse web app, for two study sites:
 
-1. **Search** the ASF archive and keep one product per date from a single processing version (PROVISIONAL, CRID P05023), plus the newest VALIDATED date.
-2. **Ingest**: stream only the study area out of each 6 GB HDF5 file (parallel range requests of the compressed chunks), drop samples flagged invalid by the NISAR mask, and average onto a common 100 m grid.
-3. **Process**: open water, flooded vegetation, water occurrence, change metrics, surface rhythm classes, zone statistics, NASA POWER rainfall.
-4. **Export** small PNG layers and a manifest, then download them as one zip.
+- **Lower Indus, Sindh, Pakistan** (track 164, frame 76, 28 passes)
+- **Amazon at Manaus, Brazil** (track 140, frame 90, 10 passes)
 
-**How to run:** open this notebook at https://colab.research.google.com (File > Upload notebook), then Runtime > Run all. When asked, paste your NASA Earthdata Login token (https://urs.earthdata.nasa.gov/profile, Generate Token). It is read with a hidden prompt and never saved in the notebook. If the runtime disconnects, run all again: finished dates are skipped.
+Steps:
+
+1. **Rainfall**: daily NASA GPM IMERG (Late Run, V07) averaged over every zone of both sites.
+2. **Search** the ASF archive and keep one product per date from a single processing version, plus the newest VALIDATED dates.
+3. **Ingest**: stream only the study area out of each 6 GB HDF5 file (parallel range requests of the compressed chunks), drop samples flagged invalid by the NISAR mask, and average onto a common 100 m grid.
+4. **Process**: open water calibrated on a reference water body and dry land, flooded vegetation, water occurrence, change metrics, surface rhythm classes, zone statistics.
+5. **Download** one zip with the results.
+
+**Before you start (one time):** IMERG lives at NASA GES DISC. In Earthdata Login (https://urs.earthdata.nasa.gov), open *Applications > Authorized Apps > Approve More Applications* and approve **NASA GESDISC DATA ARCHIVE**. Without it the rainfall step is skipped and the app falls back to NASA POWER.
+
+**How to run:** open this notebook at https://colab.research.google.com (File > Upload notebook), then Runtime > Run all. When asked, paste your NASA Earthdata Login token (https://urs.earthdata.nasa.gov/profile, Generate Token). It is read with a hidden prompt and never saved in the notebook. If the runtime disconnects, run all again: finished work is skipped.
+"""),
+        code("""
+# Choose what to run
+RUN_IMERG = True          # daily GPM IMERG rainfall for both sites (about 10 to 20 minutes)
+NISAR_SITES = ["amazon-manaus"]   # add "lower-indus" to re-run Sindh from scratch (about 20 minutes more)
 """),
         code("""
 # Setup: work in a scratch folder and install the few libraries Colab lacks.
@@ -67,52 +80,65 @@ if not os.environ.get("EARTHDATA_TOKEN"):
 print("token set:", bool(os.environ["EARTHDATA_TOKEN"]))
 """),
         code("""
-# 1. Search the archive and choose one product per date
-!{sys.executable} -m terrapulse search
+# 1. Daily GPM IMERG rainfall for every zone of both sites (resumable)
+import subprocess
+if RUN_IMERG:
+    r = subprocess.run([sys.executable, "-u", "-m", "terrapulse", "rain", "--site", "all"])
+    if r.returncode != 0:
+        print("\\nRainfall step did not finish. If the message above mentions GES DISC, approve the "
+              "'NASA GESDISC DATA ARCHIVE' application in Earthdata Login and run this cell again. "
+              "The rest of the notebook still works and uses NASA POWER rainfall instead.")
 """),
         code("""
-# 2. Stream the study area from every date onto the 100 m grid (resumable)
+# 2 to 4. Search, stream and process each NISAR site
 WORKERS = 32 if IN_COLAB else 8
-!{sys.executable} -u -m terrapulse ingest --workers {WORKERS}
+for site in NISAR_SITES:
+    print("=" * 30, site, "=" * 30)
+    !{sys.executable} -m terrapulse search --site {site}
+    !{sys.executable} -u -m terrapulse ingest --site {site} --workers {WORKERS}
+    !{sys.executable} -u -m terrapulse process --site {site}
 """),
         code("""
-# 3. Compute products and write web layers
-!{sys.executable} -u -m terrapulse process
-"""),
-        code("""
-# 4. Quick look
+# Quick look at each processed site
 import json
 import matplotlib.pyplot as plt
 from PIL import Image
 
-web = WORK / "web" / "data" / "lower-indus"
-man = json.loads((web / "manifest.json").read_text())
-print("dates:", len(man["dates"]), " water thresholds HH/HV:", man["params"]["water_hh_db"], man["params"]["water_hv_db"])
-fig, ax = plt.subplots(1, 3, figsize=(18, 6))
-ax[0].imshow(Image.open(web / "products" / "water_occurrence.png"), cmap="Blues"); ax[0].set_title("Water occurrence")
-ax[1].imshow(Image.open(web / "products" / "rhythm.png").convert("RGB")); ax[1].set_title("Surface rhythm classes")
-d = man["dates"][len(man["dates"]) // 2]["date"]
-ax[2].imshow(Image.open(web / "dates" / f"{d}_hh.png"), cmap="gray"); ax[2].set_title(f"HH {d}")
-for a in ax: a.axis("off")
-plt.show()
-z = man["zones"]["all"]["series"]
-plt.figure(figsize=(14, 3))
-plt.plot([x["date"] for x in man["dates"]], [s["water_km2"] if s else None for s in z], "o-")
-plt.xticks(rotation=60); plt.ylabel("open water km2"); plt.title("Open water, whole study area"); plt.show()
+for site in NISAR_SITES:
+    web = WORK / "web" / "data" / site
+    man = json.loads((web / "manifest.json").read_text())
+    print(site, "passes:", len(man["dates"]), " water thresholds:", man["params"]["water_thresholds_by_mode"])
+    fig, ax = plt.subplots(1, 3, figsize=(18, 6))
+    ax[0].imshow(Image.open(web / "products" / "water_occurrence.png"), cmap="Blues"); ax[0].set_title("Water occurrence")
+    ax[1].imshow(Image.open(web / "products" / "rhythm.png").convert("RGB")); ax[1].set_title("Surface rhythm classes")
+    d = man["dates"][0]["date"]
+    ax[2].imshow(Image.open(web / "dates" / f"{d}_class.png").convert("RGB")); ax[2].set_title(f"Water classes {d}")
+    for a in ax: a.axis("off")
+    plt.show()
+    z = man["zones"]["all"]["series"]
+    plt.figure(figsize=(14, 3))
+    plt.plot([x["date"] for x in man["dates"]], [s["water_km2"] if s else None for s in z], "o-", label="open water")
+    plt.plot([x["date"] for x in man["dates"]], [s["flooded_veg_km2"] if s else None for s in z], "s--", label="flooded vegetation")
+    plt.xticks(rotation=60); plt.ylabel("km2"); plt.legend(); plt.title(man["site"]["name"]); plt.show()
 """),
         code("""
-# 5. Download the web layers (about 70 MB). Unzip into the project's web/data/ folder.
-import shutil
-shutil.make_archive("terrapulse_web_data", "zip", WORK / "web" / "data")
-print("terrapulse_web_data.zip", round(os.path.getsize("terrapulse_web_data.zip") / 1e6, 1), "MB")
-DOWNLOAD_CACHE = False  # set True to also download the 100 m analysis cache (about 120 MB)
-if DOWNLOAD_CACHE:
-    shutil.make_archive("terrapulse_cache", "zip", WORK / "cache")
+# 5. Download one zip with everything the app needs (web layers, rainfall, small analysis cache)
+import zipfile
+out = WORK / "terrapulse_results.zip"
+with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+    for site in NISAR_SITES:
+        for p in (WORK / "web" / "data" / site).rglob("*"):
+            if p.is_file():
+                z.write(p, p.relative_to(WORK).as_posix())
+        for p in (WORK / "cache" / site).rglob("*"):
+            if p.is_file():
+                z.write(p, p.relative_to(WORK).as_posix())
+    for p in (WORK / "cache").glob("*/rain_imerg.json"):
+        z.write(p, p.relative_to(WORK).as_posix())
+print(out.name, round(out.stat().st_size / 1e6, 1), "MB")
 if IN_COLAB:
     from google.colab import files
-    files.download("terrapulse_web_data.zip")
-    if DOWNLOAD_CACHE:
-        files.download("terrapulse_cache.zip")
+    files.download(str(out))
 """),
     ]
     return {

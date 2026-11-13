@@ -37,6 +37,12 @@ class Site:
     end: str
     res_m: int = 100
     zones: tuple[Zone, ...] = field(default_factory=tuple)
+    water_ref: str = ""   # zone key of a permanent water body used to calibrate water thresholds
+    dry_ref: str = ""     # zone key of land that is never flooded (negative reference)
+    tagline: str = ""
+
+    def zone(self, key: str) -> Zone | None:
+        return next((z for z in self.zones if z.key == key), None)
 
     @property
     def wkt(self) -> str:
@@ -71,6 +77,42 @@ LOWER_INDUS = Site(
         Zone("jhimpir-desert", "Rocky desert near Jhimpir (check area)", (67.85, 25.05, 67.95, 25.15), "desert",
              "Dry ground that is almost as dark as water in HH. Used to check that the water rule does not misfire."),
     ),
+    water_ref="keenjhar",
+    dry_ref="jhimpir-desert",
+    tagline="Floods, wetlands and rice on the lower Indus",
 )
 
-SITES = {LOWER_INDUS.key: LOWER_INDUS}
+# Zone boxes are approximate; they summarise areas, they do not define legal or ecological boundaries.
+MANAUS = Site(
+    key="amazon-manaus",
+    name="Amazon at Manaus",
+    country="Brazil",
+    bbox=(-60.25, -3.45, -59.45, -2.88),
+    track=140,
+    frame=90,
+    direction="DESCENDING",
+    start="2026-06-01",
+    end="2026-11-12",
+    res_m=100,
+    zones=(
+        Zone("rio-negro", "Rio Negro at Manaus", (-60.22, -3.16, -60.06, -3.06), "river",
+             "Wide black-water river channel, used as the permanent water reference."),
+        Zone("meeting-waters", "Meeting of the Waters", (-59.92, -3.17, -59.80, -3.10), "river",
+             "Where the dark Rio Negro meets the muddy Solimoes to form the Amazon."),
+        Zone("careiro-varzea", "Careiro varzea floodplain", (-59.95, -3.40, -59.60, -3.18), "wetland",
+             "Seasonally flooded forest, lakes and pasture on the Solimoes floodplain."),
+        Zone("janauari", "Lago do Janauari area", (-60.10, -3.26, -59.98, -3.17), "wetland",
+             "Floodplain lakes and flooded forest south of the Rio Negro."),
+        Zone("amazon-east", "Amazon floodplain east", (-59.62, -3.35, -59.45, -3.05), "wetland",
+             "Floodplain downstream of the confluence."),
+        Zone("manaus-city", "Manaus city", (-60.06, -3.13, -59.93, -3.00), "urban",
+             "City of about two million people."),
+        Zone("ducke-forest", "Terra firme forest, Reserva Ducke (check area)", (-59.98, -2.98, -59.90, -2.92), "forest",
+             "Upland rainforest that never floods. Used as the dry-land reference."),
+    ),
+    water_ref="rio-negro",
+    dry_ref="ducke-forest",
+    tagline="The flood pulse of the Amazon",
+)
+
+SITES = {LOWER_INDUS.key: LOWER_INDUS, MANAUS.key: MANAUS}

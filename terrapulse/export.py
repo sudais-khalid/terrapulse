@@ -162,7 +162,24 @@ def export(stack: Stack, res: dict, site: Site, out: Path, rain: dict | None = N
         "zone_boxes": {z.key: {"name": z.name, "bbox": z.bbox, "kind": z.kind, "note": z.note} for z in site.zones},
         "rain": rain,
     }
+    manifest["site"]["tagline"] = site.tagline
+    manifest["site"]["water_ref"] = site.water_ref
+    manifest["site"]["dry_ref"] = site.dry_ref
     (out / "manifest.json").write_text(json.dumps(manifest, indent=1))
+    _update_index(out.parent, site, manifest)
     size = sum(p.stat().st_size for p in out.rglob("*") if p.is_file()) / 1e6
     log(f"  wrote {out} ({size:.1f} MB)")
     return out
+
+
+def _update_index(root: Path, site: Site, manifest: dict) -> None:
+    """Keep web/data/sites.json listing every exported site, for the app's site switcher."""
+    path = root / "sites.json"
+    index = json.loads(path.read_text()) if path.exists() else {"sites": []}
+    entry = {"key": site.key, "name": site.name, "country": site.country, "tagline": site.tagline,
+             "bbox": site.bbox, "passes": len(manifest["dates"]),
+             "first": manifest["dates"][0]["date"], "last": manifest["dates"][-1]["date"]}
+    index["sites"] = [s for s in index["sites"] if s["key"] != site.key] + [entry]
+    order = {"lower-indus": 0}
+    index["sites"].sort(key=lambda s: (order.get(s["key"], 1), s["key"]))
+    path.write_text(json.dumps(index, indent=1))
