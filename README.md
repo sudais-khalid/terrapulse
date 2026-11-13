@@ -8,7 +8,7 @@ Built by team **TERRAPULSE** (Sudais Khalid, Sunnia Aslam, Topi, Pakistan) for t
 
 ![NISAR water map on 7 July 2026 next to the cloud-covered MODIS image of the same day](web/assets/shots/clouds.jpg)
 
-**Live app:** `web/index.html` (deployed to GitHub Pages) · **Slides:** `web/slides.html` · **Submission text:** [docs/SUBMISSION.md](docs/SUBMISSION.md)
+**Live app:** https://sudais-khalid.github.io/terrapulse/ · **Slides:** https://sudais-khalid.github.io/terrapulse/slides.html · **Code:** https://github.com/sudais-khalid/terrapulse · **Submission text:** [docs/SUBMISSION.md](docs/SUBMISSION.md)
 
 ## What you can do
 

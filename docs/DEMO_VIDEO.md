@@ -13,8 +13,8 @@ Tip: open the app with the shareable links below so each shot starts in the righ
 | 0:20 to 0:27 | Switch site to the Amazon at Manaus, then NISAR worldwide with "Find NISAR passes" | "From the Indus to the Amazon, anyone can measure, compare and download the change." |
 | 0:27 to 0:30 | Title slide or app with the address on screen | "Open source, built on NASA NISAR data." |
 
-Shareable starting points (replace the base address with your GitHub Pages address):
+Shareable starting points:
 
-- Clouds chapter: `index.html#site=lower-indus&mode=story&ch=3`
-- Rice chapter: `index.html#site=lower-indus&mode=story&ch=6`
-- Manaus flood pulse: `index.html#site=amazon-manaus&mode=story&ch=3`
+- Clouds chapter: `https://sudais-khalid.github.io/terrapulse/index.html#site=lower-indus&mode=story&ch=3`
+- Rice chapter: `https://sudais-khalid.github.io/terrapulse/index.html#site=lower-indus&mode=story&ch=6`
+- Manaus flood pulse: `https://sudais-khalid.github.io/terrapulse/index.html#site=amazon-manaus&mode=story&ch=3`

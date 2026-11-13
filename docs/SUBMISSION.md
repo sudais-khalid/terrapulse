@@ -2,7 +2,7 @@
 
 Challenge: **Dancing with the SARs** · Team: **TERRAPULSE** (Sudais Khalid, Sunnia Aslam) · Local event: Topi, Pakistan
 
-Replace the two links marked `<...>` before submitting. Check every field against the official 2026 Project Submission Guide.
+Add the demo video link below once it is uploaded. Check every field against the official 2026 Project Submission Guide.
 
 ---
 
@@ -16,11 +16,11 @@ TerraPulse is an open-source web app that turns NASA-ISRO NISAR L-band radar int
 
 ## Link to project demo
 
-`<link to the 30-second video, or to the slides: https://<user>.github.io/<repo>/slides.html>`
+`<link to the 30-second video>` (slides: https://sudais-khalid.github.io/terrapulse/slides.html)
 
 ## Link to final project
 
-`<https://<user>.github.io/<repo>/>` (live app) and `<https://github.com/<user>/<repo>>` (code, notebook, data pipeline)
+https://sudais-khalid.github.io/terrapulse/ (live app) and https://github.com/sudais-khalid/terrapulse (code, notebook, data pipeline)
 
 ## Detailed project description
 
