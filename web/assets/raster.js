@@ -83,10 +83,13 @@ export async function waterLive(hhUrl, hvUrl, classUrl, quant, thrHH, thrHV, col
   const qh = qOf(thrHH, quant), qv = qOf(thrHV, quant);
   const out = new Uint8ClampedArray(hh.w * hh.h * 4);
   for (let i = 0, j = 0; i < hh.v.length; i++, j += 4) {
-    const a = hh.v[i], b = hv.v[i];
-    if (!a || !b) continue;
-    if (a < qh && b < qv) { out.set(colours.water, j); continue; }
     const r = cls.rgba[j], g = cls.rgba[j + 1], bl = cls.rgba[j + 2], al = cls.rgba[j + 3];
+    const a = hh.v[i], b = hv.v[i];
+    if (!a || !b) {
+      if (al > 0 && Math.abs(r - 138) < 8 && Math.abs(g - 144) < 8) out.set(colours.nodata, j); // masked swath gap
+      continue;
+    }
+    if (a < qh && b < qv) { out.set(colours.water, j); continue; }
     if (al > 0 && r > 140 && bl > 140 && g < 120) out.set(colours.flood, j);
   }
   return toUrl(hh.w, hh.h, out);
@@ -101,9 +104,11 @@ export const CHANGE_CLASSES = [
   { key: "cleared", label: "Less vegetation (HV down): harvest or clearing", color: [208, 86, 63, 220] },
 ];
 
-export async function changeMap(a, b, quant, thrHH, thrHV, minDb = 3) {
+// a and b: { hh, hv, thr: { hh, hv } } with water thresholds for that pass's radar mode.
+export async function changeMap(a, b, quant, minDb = 3) {
   const [ha, va, hb, vb] = await Promise.all([loadGray(a.hh), loadGray(a.hv), loadGray(b.hh), loadGray(b.hv)]);
-  const qh = qOf(thrHH, quant), qv = qOf(thrHV, quant);
+  const qha = qOf(a.thr.hh, quant), qva = qOf(a.thr.hv, quant);
+  const qhb = qOf(b.thr.hh, quant), qvb = qOf(b.thr.hv, quant);
   const step = quant.step;
   const out = new Uint8ClampedArray(ha.w * ha.h * 4);
   const counts = { newwater: 0, drained: 0, wetter: 0, greener: 0, cleared: 0, valid: 0 };
@@ -112,7 +117,7 @@ export async function changeMap(a, b, quant, thrHH, thrHV, minDb = 3) {
     const h1 = ha.v[i], v1 = va.v[i], h2 = hb.v[i], v2 = vb.v[i];
     if (!h1 || !v1 || !h2 || !v2) continue;
     counts.valid++;
-    const w1 = h1 < qh && v1 < qv, w2 = h2 < qh && v2 < qv;
+    const w1 = h1 < qha && v1 < qva, w2 = h2 < qhb && v2 < qvb;
     let k = null;
     if (!w1 && w2) k = "newwater";
     else if (w1 && !w2) k = "drained";

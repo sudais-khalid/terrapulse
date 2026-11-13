@@ -6,7 +6,7 @@ const SITE = "lower-indus";
 const DATA = `data/${SITE}/`;
 const GIBS = (date) =>
   `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/NISAR_L2_Geocoded_Polarimetric_Covariance/default/${date}/GoogleMapsCompatible_Level13/{z}/{y}/{x}.png`;
-const COLOURS = { water: [74, 157, 248, 235], flood: [196, 90, 216, 225] };
+const COLOURS = { water: [74, 157, 248, 235], flood: [196, 90, 216, 225], nodata: [138, 144, 168, 102] };
 const BLANK = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
 const $ = (s) => document.querySelector(s);
@@ -67,18 +67,29 @@ function makeMap(container, interactive = true) {
 const whenLoaded = (map) => map.ready;
 
 // ------------------------------------------------------------------ rendering
+// Water thresholds for a pass: calibrated per radar mode, shifted by the user's slider if moved.
+function thrFor(i) {
+  const d = M.dates[i];
+  const shift = state.thr == null ? 0 : state.thr - M.params.water_hh_db;
+  return { hh: (d.thr_hh ?? M.params.water_hh_db) + shift, hv: d.thr_hv ?? M.params.water_hv_db };
+}
+const isWet = (h, v, i) => h != null && v != null && h < thrFor(i).hh && v < thrFor(i).hv;
+
 async function urlFor(layer, i, iB) {
   const q = M.db_quant;
   const d = dateOf(i);
-  const thrHH = state.thr ?? M.params.water_hh_db;
   switch (layer) {
     case "radar": return radarColour(fileFor(d, "hh"), fileFor(d, "hv"), q);
-    case "water":
+    case "water": {
       if (state.thr == null) return fileFor(d, "class");
-      return waterLive(fileFor(d, "hh"), fileFor(d, "hv"), fileFor(d, "class"), q, thrHH, M.params.water_hv_db, COLOURS);
+      const t = thrFor(i);
+      return waterLive(fileFor(d, "hh"), fileFor(d, "hv"), fileFor(d, "class"), q, t.hh, t.hv, COLOURS);
+    }
     case "change": {
-      const a = dateOf(iB ?? Math.max(0, i - 1));
-      const res = await changeMap({ hh: fileFor(a, "hh"), hv: fileFor(a, "hv") }, { hh: fileFor(d, "hh"), hv: fileFor(d, "hv") }, q, thrHH, M.params.water_hv_db);
+      const ia = iB ?? Math.max(0, i - 1);
+      const a = dateOf(ia);
+      const res = await changeMap({ hh: fileFor(a, "hh"), hv: fileFor(a, "hv"), thr: thrFor(ia) },
+                                  { hh: fileFor(d, "hh"), hv: fileFor(d, "hv"), thr: thrFor(i) }, q);
       showChangeStats(res.counts, a, d);
       return res.url;
     }
@@ -152,7 +163,7 @@ function updateChrome() {
   const showsDate = L.dated;
   $("#date-chip").hidden = !showsDate;
   if (showsDate) {
-    const extra = d.maturity === "VALIDATED" ? " · validated" : "";
+    const extra = (d.maturity === "VALIDATED" ? " · validated" : "") + (d.wind_roughened ? " · <b>wind-roughened water</b>" : "");
     $("#date-chip").innerHTML = state.layer === "change"
       ? `${niceDate(dateOf(iB))} <b>→</b> ${niceDate(d.date)}`
       : `<b>${niceDate(d.date)}</b> · pass ${state.index + 1} of ${M.dates.length}${extra}`;
@@ -173,7 +184,7 @@ function renderLegend() {
       box.innerHTML = `<div class="swatches">${sw("#3fbf4f", "Vegetation (strong HV)")}${sw("#e8c8e8", "Towns, trunks (strong HH and HV)")}${sw("#b03aa8", "Double bounce, wet stems (strong HH)")}${sw("#111", "Calm water, smooth soil")}</div>`;
       break;
     case "water":
-      box.innerHTML = `<div class="swatches">${sw(COLOURS.water, "Open water")}${sw(COLOURS.flood, "Flooded vegetation (likely)")}</div>`;
+      box.innerHTML = `<div class="swatches">${sw(COLOURS.water, "Open water")}${sw(COLOURS.flood, "Flooded vegetation (likely)")}${sw(COLOURS.nodata, "No valid radar data on this pass")}</div>`;
       break;
     case "change":
       box.innerHTML = `<div class="swatches">${CHANGE_CLASSES.map((c) => sw(c.color, c.label, `<em id="chg-${c.key}"></em>`)).join("")}</div>`;
@@ -256,11 +267,11 @@ function drawInspector(lngLat, hh, hv) {
   for (let v = Math.ceil(lo / 5) * 5; v <= hi; v += 5) g += `<text x="2" y="${y(v) + 3}" fill="#6f7697" font-family="Martian Mono" font-size="9">${v} dB</text><line x1="${pad.l}" x2="${W - pad.r}" y1="${y(v)}" y2="${y(v)}" stroke="#1c2650"/>`;
   g += `<line x1="${x(times[state.index])}" x2="${x(times[state.index])}" y1="${pad.t}" y2="${H - pad.b}" stroke="#d0563f"/>`;
   g += `<path d="M${line(hv)}" fill="none" stroke="#8cc265" stroke-width="1.8"/><path d="M${line(hh)}" fill="none" stroke="#ece6d6" stroke-width="1.8"/>`;
-  hh.forEach((v, i) => { if (v != null && v < M.params.water_hh_db && hv[i] != null && hv[i] < M.params.water_hv_db) g += `<circle cx="${x(times[i])}" cy="${y(v)}" r="3.5" fill="#4a9df8"/>`; });
+  hh.forEach((v, i) => { if (isWet(v, hv[i], i)) g += `<circle cx="${x(times[i])}" cy="${y(v)}" r="3.5" fill="#4a9df8"/>`; });
   g += `<text x="${pad.l}" y="${H - 5}" fill="#6f7697" font-family="Martian Mono" font-size="9">${niceDate(M.dates[0].date)}</text><text x="${W - pad.r}" y="${H - 5}" text-anchor="end" fill="#6f7697" font-family="Martian Mono" font-size="9">${niceDate(M.dates[M.dates.length - 1].date)}</text>`;
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.innerHTML = g;
-  const wet = hh.filter((v, i) => v != null && v < M.params.water_hh_db && hv[i] != null && hv[i] < M.params.water_hv_db).length;
+  const wet = hh.filter((v, i) => isWet(v, hv[i], i)).length;
   const n = hh.filter((v) => v != null).length;
   const hvv = hv.filter((v) => v != null);
   const swing = hvv.length ? Math.max(...hvv) - Math.min(...hvv) : 0;
@@ -386,7 +397,7 @@ function updatePulseZone() {
   const z = M.zones[k];
   $("#pulse-title").textContent = `Open water, ${z.name.toLowerCase().startsWith("whole") ? "whole study area" : z.name}`;
   const rain = M.rain?.series?.[k] || M.rain?.series?.all || null;
-  $("#pulse-sub").textContent = `blue: open water km² · dashed purple: flooded vegetation · bars: daily rain (NASA POWER) · hatched: NISAR data gap`;
+  $("#pulse-sub").textContent = `blue: open water km² · dashed purple: flooded vegetation · bars: daily rain (NASA POWER) · hatched: NISAR data gap · wind: lakes roughened by wind`;
   pulse.setData(z.series, rain);
 }
 

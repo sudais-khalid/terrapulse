@@ -26,18 +26,29 @@ export const WORLD_PLACES = [
 const km = (v) => (v >= 100 ? Math.round(v).toLocaleString("en-GB") : v.toFixed(1));
 const day = (d) => new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 
+const median = (a) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : 0; };
+
 export function buildStory(m) {
   const dates = m.dates.map((d) => d.date);
   const all = m.zones.all.series;
   const idx = (d) => Math.max(0, dates.indexOf(d));
-  const valid = all.map((s, i) => [s, i]).filter(([s]) => s);
+  // Extremes skip passes where wind roughened the water (the reference lake stopped looking like water).
+  const valid = all.map((s, i) => [s, i]).filter(([s, i]) => s && !m.dates[i].wind_roughened);
+  const windy = m.dates.filter((d) => d.wind_roughened).map((d) => d.date);
   const wMax = valid.reduce((a, b) => (b[0].water_km2 > a[0].water_km2 ? b : a));
   const wMin = valid.reduce((a, b) => (b[0].water_km2 < a[0].water_km2 ? b : a));
   const fMax = valid.reduce((a, b) => (b[0].flooded_veg_km2 > a[0].flooded_veg_km2 ? b : a));
   const before = dates.includes("2026-07-19") ? "2026-07-19" : dates[Math.floor(dates.length / 2)];
   const after = dates.includes("2026-08-12") ? "2026-08-12" : dates[Math.min(dates.length - 1, idx(before) + 1)];
+  const zs = (key, d, field) => m.zones[key]?.series[idx(d)]?.[field];
   const keen = m.zones.keenjhar;
-  const keenVals = keen ? keen.series.filter(Boolean).map((s) => s.water_km2) : [];
+  const keenVals = keen ? keen.series.filter((s, i) => s && !m.dates[i].wind_roughened).map((s) => s.water_km2) : [];
+  const farms = m.zones["left-bank-farms"];
+  const farmWater = farms ? farms.series.map((s, i) => [s ? s.water_km2 : -1, i]).reduce((a, b) => (b[0] > a[0] ? b : a)) : null;
+  const farmFlood = farms ? farms.series.map((s, i) => [s ? s.flooded_veg_km2 : -1, i]).reduce((a, b) => (b[0] > a[0] ? b : a)) : null;
+  const lagoonDelta = (zs("badin-lagoons", after, "water_km2") ?? 0) - (zs("badin-lagoons", before, "water_km2") ?? 0);
+  const floodDelta = (zs("all", after, "flooded_veg_km2") ?? 0) - (zs("all", before, "flooded_veg_km2") ?? 0);
+  const monthOf = (d) => new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { month: "long", timeZone: "UTC" });
 
   return [
     {
@@ -59,26 +70,27 @@ export function buildStory(m) {
     {
       kicker: "Open water, measured",
       title: "Water you can count",
-      body: `<p>Calm water is the darkest thing radar sees. TerraPulse marks a pixel as open water when both polarisations fall below a threshold found automatically from the data (HH under ${m.params.water_hh_db} dB, HV under ${m.params.water_hv_db} dB).</p>
-             <div class="fig"><b>${km(wMax[0].water_km2)} km²</b><span>open water on ${day(dates[wMax[1]])}, the wettest pass of the year</span></div>
-             <p>The driest pass, ${day(dates[wMin[1]])}, showed ${km(wMin[0].water_km2)} km². The blue line in the strip below tracks every pass in between.</p>`,
+      body: `<p>Calm water is the darkest thing radar sees, but at L-band smooth desert is nearly as dark. So TerraPulse learns its thresholds from two places it knows: Keenjhar Lake (always water) and the rocky desert near Jhimpir (always dry), separately for each radar mode. A field that suddenly turns 3 dB darker than its normal also counts as newly flooded.</p>
+             <div class="fig"><b>${km(wMax[0].water_km2)} km²</b><span>open water on ${day(dates[wMax[1]])}, the wettest pass</span></div>
+             <p>Keenjhar Lake reads about ${km(median(keenVals))} km² on almost every pass, a good sign the method is stable. The lowest reliable total, ${km(wMin[0].water_km2)} km², came in ${monthOf(dates[wMin[1]])}${windy.length ? `. On ${windy.map(day).join(" and ")} even the lake looked partly like land: wind had roughened its surface, so that pass is marked <i>wind</i> in the strip below and its total reads low` : ""}.</p>`,
       view: { bbox: m.site.bbox }, layer: "water", date: dates[wMax[1]],
     },
     {
       kicker: "Monsoon 2026",
       title: "After the August rain",
       body: `<p>In early August 2026 a heavy monsoon spell hit Hyderabad, Badin and Thatta, and canals breached in Badin. NISAR happened to be off at that moment (a permanent instrument gap from 27 July to 10 August), but it imaged the area on ${day(before)} and again on ${day(after)}.</p>
-             <p>Drag the divider: left is ${day(before)}, right is ${day(after)}. Blue is open water; purple marks fields where the radar brightened sharply, typical of water standing under crops or of soaked soil.</p>
-             <p>For a pixel-by-pixel summary, open Explore and choose <i>What changed</i>.</p>
+             <div class="fig"><b>${lagoonDelta >= 0 ? "+" : ""}${km(lagoonDelta)} km²</b><span>open water in the Badin coastal lagoons between the two passes</span></div>
+             <p>Drag the divider: left is ${day(before)}, right is ${day(after)}. Blue is open water. Purple, which grew by ${km(floodDelta)} km², marks fields where the radar brightened sharply: water standing under a crop.</p>
              <p class="src">Rain reports: Sindh PDMA situation reports, July and August 2026.</p>`,
-      view: { center: [68.55, 24.85], zoom: 9 }, layer: "water", date: after, compare: before,
+      view: { center: [68.62, 24.62], zoom: 9.1 }, layer: "water", date: after, compare: before,
     },
     {
       kicker: "What L-band adds",
-      title: "Water under the canopy",
-      body: `<p>Optical satellites see the tops of crops and reeds. NISAR's 24 cm wavelength slips between leaves, hits standing water and bounces back off stems, which makes flooded vegetation unusually bright in HH.</p>
+      title: "Rice in standing water",
+      body: `<p>Optical satellites see the tops of crops. NISAR's 24 cm wavelength slips between the leaves, hits the water under them and bounces back off the stems, so flooded fields light up in HH.</p>
              <div class="fig"><b>${km(fMax[0].flooded_veg_km2)} km²</b><span>likely flooded vegetation on ${day(dates[fMax[1]])}</span></div>
-             <p>Look for purple patches in the rice belt east of the Indus. These are estimates: a sharp rise in HH can also mean very wet soil.</p>`,
+             ${farms && farmWater && farmFlood ? `<p>The radar traces the rice season on the left bank of the Indus: open water peaks on ${day(dates[farmWater[1]])} (${km(farmWater[0])} km²) as fields are flooded for transplanting, plants standing in water peak on ${day(dates[farmFlood[1]])} (${km(farmFlood[0])} km², about ${Math.round((farmFlood[0] / farms.area_km2) * 100)}% of that farm zone), then fade as the harvest comes in.</p>` : ""}
+             <p class="src">Estimate: a sharp rise in HH can also mean very wet soil.</p>`,
       view: { center: [68.6, 25.0], zoom: 9.3 }, layer: "water", date: dates[fMax[1]],
     },
     {
@@ -92,7 +104,7 @@ export function buildStory(m) {
       kicker: "Every place has a rhythm",
       title: "One year, many dances",
       body: `<p>TerraPulse groups every 100 m cell by how its radar signal moved through the year, using unsupervised clustering, then names each group with simple physical rules.</p>
-             ${keenVals.length ? `<p>Keenjhar Lake stays still at about ${km(keenVals.reduce((a, b) => a + b, 0) / keenVals.length)} km² of open water. The coastal lagoons, the floodplain and the rice belt each keep their own beat.</p>` : ""}
+             <p>Keenjhar Lake and the Indus channel hold still. The rice belt swirls with water each autumn, the farms swing with every crop, and the green belt around Hyderabad and Tando Allahyar, known for its mango orchards, sways slowly all year.</p>
              <p>Now explore: pick any layer and date, click a spot to see its history, or switch to NISAR worldwide and fly anywhere on Earth.</p>`,
       view: { bbox: m.site.bbox }, layer: "rhythm",
     },
@@ -119,8 +131,10 @@ export const LEARN_HTML = `
 <ul>
   <li><b>Data:</b> NISAR Level-2 GCOV (radiometrically terrain corrected gamma-naught), track 164, frame 76, from the ASF DAAC. The core series uses one processing version (PROVISIONAL, CRID P05023) so changes are not artefacts of software updates. The newest pass comes from the VALIDATED collection and is marked in the strip.</li>
   <li><b>Streaming:</b> only the study area is read from each 6 GB file, by fetching the compressed HDF5 chunks we need in parallel.</li>
+  <li><b>Quality mask:</b> samples NISAR flags as invalid (partially focused radar data in swath gaps) are dropped; on 20 MHz passes this removes about 16% of the area, shown in grey.</li>
   <li><b>Grid:</b> 10 m and 20 m pixels are averaged to 100 m, which also suppresses speckle.</li>
-  <li><b>Open water:</b> HH and HV both below thresholds chosen by Otsu's method on the whole year's histogram.</li>
+  <li><b>Open water:</b> HH and HV both below thresholds that best separate Keenjhar Lake (water) from the Jhimpir desert (dry land), chosen separately for each radar mode because the 40 MHz mode reads dark surfaces about 1 dB brighter. A pixel that turns at least 3 dB darker than its own median in both channels also counts as newly flooded. Haleji Lake, not used for calibration, stays at a steady size: an independent check.</li>
+  <li><b>Wind check:</b> if less than 70% of Keenjhar Lake reads as water on a pass, wind has roughened the water and that pass is flagged.</li>
   <li><b>Flooded vegetation (likely):</b> HH at least 3 dB above that pixel's own median, rising more than HV, and bright overall, excluding built-up areas.</li>
   <li><b>Change:</b> log ratio between any two dates, sorted into new water, receding water, brighter HH, more or less vegetation.</li>
   <li><b>Surface rhythm:</b> k-means clustering of each pixel's yearly statistics, named by physical rules.</li>
@@ -129,7 +143,7 @@ export const LEARN_HTML = `
 
 <h3>Limits to keep in mind</h3>
 <ul>
-  <li>Wind can roughen water and hide it; very smooth dry soil can look like water.</li>
+  <li>Wind can roughen water and hide it. Smooth dry desert can look like water: in the Jhimpir check area 12 to 17% of desert pixels pass the water test, so small scattered blue specks on dry land are not reliable.</li>
   <li>A sharp HH rise can mean very wet soil rather than standing water.</li>
   <li>Radio interference can create bright blobs on single dates.</li>
   <li>NISAR had a permanent data gap from 27 July to 10 August 2026.</li>

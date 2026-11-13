@@ -76,6 +76,18 @@ def save_png(a: np.ndarray, path: Path, palette: list[str] | None = None) -> Non
     im.save(path, optimize=True)
 
 
+def _date_entry(d: str, m: dict, i: int, params: dict) -> dict:
+    thr = params.get("water_thresholds_by_mode", {}).get(m.get("mode"), {})
+    lake = (params.get("reference_lake_water_frac") or [None] * (i + 1))[i]
+    return {
+        "date": d, "maturity": "VALIDATED" if m.get("collection") == "NISAR_L2_GCOV_V1" else "PROVISIONAL",
+        "core": m.get("core"), "crid": m.get("crid"), "mode": m.get("mode"), "pol": m.get("pol"),
+        "spacing_m": m.get("spacing_m"), "scene": m.get("scene"),
+        "thr_hh": thr.get("hh_db", params.get("water_hh_db")), "thr_hv": thr.get("hv_db", params.get("water_hv_db")),
+        "lake_water_frac": lake, "wind_roughened": bool(lake is not None and lake < params.get("wind_lake_frac", 0.7)),
+    }
+
+
 def export(stack: Stack, res: dict, site: Site, out: Path, rain: dict | None = None,
            stack_factor: int = 4, log=print) -> Path:
     out.mkdir(parents=True, exist_ok=True)
@@ -83,12 +95,15 @@ def export(stack: Stack, res: dict, site: Site, out: Path, rain: dict | None = N
     T = len(stack.dates)
     log(f"  web grid: {warp.width} x {warp.height} px, {warp.res:.0f} m mercator")
 
-    # Per-date backscatter and classes.
+    # Per-date backscatter and classes. Inside the study grid, pixels without valid radar data
+    # (masked swath gaps) get class 4 so the map can show them as "no data" instead of dry land.
     for t, d in enumerate(stack.dates):
         save_png(warp(quantize_db(res["hh"][t])), out / "dates" / f"{d}_hh.png")
         save_png(warp(quantize_db(res["hv"][t])), out / "dates" / f"{d}_hv.png")
-        save_png(warp(res["classes"][t]), out / "dates" / f"{d}_class.png",
-                 palette=["#000000", "#00000000", "#1f6fd1", "#b04fd6"])
+        cls = res["classes"][t].copy()
+        cls[cls == 0] = 4
+        save_png(warp(cls), out / "dates" / f"{d}_class.png",
+                 palette=["#000000", "#00000000", "#1f6fd1", "#b04fd6", "#8a90a866"])
 
     def pct(a):
         q = np.zeros(a.shape, np.uint8)
@@ -137,12 +152,11 @@ def export(stack: Stack, res: dict, site: Site, out: Path, rain: dict | None = N
                   "res_m": site.res_m, "mercator_res_m": round(warp.res, 2)},
         "stack": {"file": "stack.bin", "factor": f, "width": w2, "height": h2, "order": "T,pol(hh,hv),y,x"},
         "db_quant": {"min": DB_MIN, "max": DB_MAX, "step": DB_STEP, "nodata": 0},
-        "dates": [{"date": d, "maturity": ("VALIDATED" if m.get("collection") == "NISAR_L2_GCOV_V1" else "PROVISIONAL"),
-                   "core": m.get("core"), "crid": m.get("crid"), "mode": m.get("mode"), "pol": m.get("pol"),
-                   "spacing_m": m.get("spacing_m"), "scene": m.get("scene")} for d, m in zip(stack.dates, stack.meta)],
+        "dates": [_date_entry(d, m, i, res["params"]) for i, (d, m) in enumerate(zip(stack.dates, stack.meta))],
         "data_gap": DATA_GAP,
         "params": res["params"],
-        "classes": {"0": "no data", "1": "land", "2": "open water", "3": "flooded vegetation (likely)"},
+        "classes": {"0": "outside study area", "1": "land", "2": "open water", "3": "flooded vegetation (likely)",
+                    "4": "no valid radar data (masked swath gap)"},
         "rhythm_classes": [{"code": c[0], "label": c[1], "dance": c[2], "color": c[3]} for c in RHYTHM_CLASSES],
         "zones": res["zones"],
         "zone_boxes": {z.key: {"name": z.name, "bbox": z.bbox, "kind": z.kind, "note": z.note} for z in site.zones},

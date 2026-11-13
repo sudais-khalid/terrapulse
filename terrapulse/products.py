@@ -18,6 +18,8 @@ from .ingest import Grid
 
 # Class codes used in per-date maps.
 NODATA, LAND, OPEN_WATER, FLOODED_VEG = 0, 1, 2, 3
+# A pass is flagged as wind-roughened when less than this share of the reference lake reads as water.
+WIND_LAKE_FRAC = 0.7
 
 
 @dataclass
@@ -174,21 +176,78 @@ def compute(stack: Stack, site: Site, log=print) -> dict:
         corrected = True
     log(f"  mode bias (vs {ref_mode}): {json.dumps(bias)}; corrected={corrected}")
 
-    # 2. Open water thresholds (Otsu over the whole stack, bounded).
-    sample = np.random.default_rng(0).choice(hh[valid], size=min(2_000_000, int(valid.sum())), replace=False)
-    sample_hv = np.random.default_rng(1).choice(hv[valid], size=min(2_000_000, int(valid.sum())), replace=False)
-    t_hh = float(np.clip(otsu(sample, -35, 5), -22, -14))
-    t_hv = float(np.clip(otsu(sample_hv, -40, -5), -30, -20))
-    water = valid & (hh < t_hh) & (hv < t_hv)
-    log(f"  open water thresholds: HH < {t_hh:.1f} dB and HV < {t_hv:.1f} dB")
-
-    # 3. Flooded vegetation (L-band double bounce): HH jumps well above the pixel's
-    #    own median, HH rises more than HV, and HH is bright.
     with np.errstate(invalid="ignore"):
         hh_med = np.nanmedian(hh, axis=0)
         hv_med = np.nanmedian(hv, axis=0)
     d_hh = hh - hh_med[None]
     d_hv = hv - hv_med[None]
+
+    # 2. Open water. At L-band, calm water sits near the noise floor in HV, but smooth dry
+    #    desert is almost as dark in HH, so a blind histogram split misfires. We calibrate
+    #    on a permanent reference lake (the darkest 40% of its zone by median HV) and take
+    #    the 95th percentile of its values over all passes as thresholds.
+    # Thresholds are calibrated separately per radar mode, because the 40 MHz mode has a
+    # higher noise floor and reads dark targets about 1 dB brighter than the 20 MHz mode.
+    ref = next((z for z in site.zones if z.kind == "lake"), None)
+    core = None
+    if ref is not None:
+        zm = zone_mask(site, stack.grid, ref.bbox)
+        core = zm & np.isfinite(hv_med) & (hv_med <= np.nanpercentile(hv_med[zm], 40))
+        if core.sum() < 50:
+            core = None
+    dry_zone = next((z for z in site.zones if z.kind == "desert"), None)
+    dry = zone_mask(site, stack.grid, dry_zone.bbox) if dry_zone else None
+    thr, skill = {}, {}
+    for m in sorted(set(modes)):
+        sel = modes == m
+        if core is not None and dry is not None and dry.sum() >= 50:
+            # Pick the thresholds that best separate known water (reference lake) from
+            # known dry land (desert check area): maximise Youden's J = hit rate - false alarms.
+            L = np.stack([hh[sel][:, core].ravel(), hv[sel][:, core].ravel()], 1)
+            D = np.stack([hh[sel][:, dry].ravel(), hv[sel][:, dry].ravel()], 1)
+            L, D = L[np.all(np.isfinite(L), 1)], D[np.all(np.isfinite(D), 1)]
+            best = (-1.0, -17.0, -24.0, 0.0, 0.0)
+            for a in np.arange(-22, -13.9, 0.25):
+                la, da = L[:, 0] < a, D[:, 0] < a
+                for b in np.arange(-28, -19.9, 0.25):
+                    tpr = float((la & (L[:, 1] < b)).mean())
+                    fpr = float((da & (D[:, 1] < b)).mean())
+                    if tpr - fpr > best[0]:
+                        best = (tpr - fpr, float(a), float(b), tpr, fpr)
+            thr[m] = (best[1], best[2])
+            skill[m] = {"lake_hit_rate": round(best[3], 3), "desert_false_alarm": round(best[4], 3)}
+        elif core is not None:
+            thr[m] = (float(np.clip(np.nanpercentile(hh[sel][:, core], 95), -22, -14)),
+                      float(np.clip(np.nanpercentile(hv[sel][:, core], 95), -28, -21)))
+        else:
+            v = valid[sel]
+            thr[m] = (float(np.clip(otsu(hh[sel][v], -35, 5), -22, -14)), float(np.clip(otsu(hv[sel][v], -40, -5), -28, -21)))
+    calib = (f"{ref.name} (water) vs {dry_zone.name} (dry land)" if skill else
+             f"{ref.name}" if core is not None else "Otsu histogram split")
+    if skill:
+        log(f"  calibration skill per mode: {json.dumps(skill)}")
+    t_hh_d = np.array([thr[m][0] for m in modes], np.float32)[:, None, None]
+    t_hv_d = np.array([thr[m][1] for m in modes], np.float32)[:, None, None]
+    steady_water = (hh < t_hh_d) & (hv < t_hv_d)
+    # Newly flooded ground: both channels drop at least 3 dB below the pixel's own median
+    # and end up close to water levels. Always-dark desert never changes, so it is excluded.
+    new_water = (d_hh <= -3) & (d_hv <= -3) & (hh < t_hh_d + 2) & (hv < t_hv_d + 2)
+    water = valid & (steady_water | new_water)
+    t_hh, t_hv = thr[ref_mode]
+    log(f"  open water thresholds per mode (calibrated on {calib}): " +
+        ", ".join(f"{m}: HH < {a:.1f}, HV < {b:.1f} dB" for m, (a, b) in thr.items()))
+
+    # Wind check: a permanent lake that stops looking like water has a wind-roughened surface.
+    lake_frac = [None] * T
+    if core is not None:
+        for t in range(T):
+            vv = valid[t] & core
+            lake_frac[t] = round(float(water[t][vv].mean()), 3) if vv.sum() else None
+        windy = [stack.dates[t] for t in range(T) if lake_frac[t] is not None and lake_frac[t] < WIND_LAKE_FRAC]
+        log(f"  reference lake water fraction per pass: min {min(f for f in lake_frac if f is not None):.2f}; wind-roughened passes: {windy}")
+
+    # 3. Flooded vegetation (L-band double bounce): HH jumps well above the pixel's
+    #    own median, HH rises more than HV, and HH is bright.
     urban_like = hh_med > -4
     flooded = valid & ~water & (d_hh >= 3) & ((d_hh - d_hv) >= 2) & (hh >= -6) & ~urban_like[None]
 
@@ -222,6 +281,9 @@ def compute(stack: Stack, site: Site, log=print) -> dict:
     X = feats[ok]
     if len(X) >= 1000:
         cents_units, cluster_to_class, rhythm = rhythm_classes(X, ok, H, W, log)
+        # Small, distinctive classes can be absorbed by large clusters; pin them per pixel.
+        rhythm[ok & (hh_med >= -5) & (hh_std <= 1.5)] = 6        # built-up: bright and steady HH
+        rhythm[ok & (occurrence >= 0.8)] = 1                      # permanent water
     else:
         log("  rhythm skipped: not enough passes per pixel")
         cents_units, cluster_to_class, rhythm = np.zeros((0, 7)), np.zeros(0, np.uint8), np.zeros((H, W), np.uint8)
@@ -234,16 +296,23 @@ def compute(stack: Stack, site: Site, log=print) -> dict:
     zstats = {}
     for key, (zname, m, kind) in zones.items():
         rows = []
+        zone_cells = max(int(m.sum()), 1)
         for t in range(T):
             v = valid[t] & m
             n = int(v.sum())
-            if n == 0:
+            if n < 0.3 * zone_cells:  # too little coverage to say anything
                 rows.append(None)
                 continue
+            # Areas are scaled from the observed share to the whole zone, because passes
+            # in the 20 MHz mode lose part of the area to masked swath gaps.
+            scale = zone_cells / n * cell_km2
+            w = float((classes[t][m] == OPEN_WATER).sum())
+            f = float((classes[t][m] == FLOODED_VEG).sum())
             rows.append({
-                "valid_frac": round(n / max(int(m.sum()), 1), 3),
-                "water_km2": round(float((classes[t][m] == OPEN_WATER).sum()) * cell_km2, 2),
-                "flooded_veg_km2": round(float((classes[t][m] == FLOODED_VEG).sum()) * cell_km2, 2),
+                "valid_frac": round(n / zone_cells, 3),
+                "water_km2": round(w * scale, 2),
+                "flooded_veg_km2": round(f * scale, 2),
+                "water_km2_observed": round(w * cell_km2, 2),
                 "hh_db": round(float(10 * np.log10(np.nanmean(10 ** (hh[t][v] / 10)))), 2),
                 "hv_db": round(float(10 * np.log10(np.nanmean(10 ** (hv[t][v] / 10)))), 2),
             })
@@ -254,7 +323,11 @@ def compute(stack: Stack, site: Site, log=print) -> dict:
         "occurrence": occurrence, "flood_freq": flood_freq, "hv_range": hv_range, "cv": cv,
         "hh_med": hh_med, "hv_med": hv_med, "rhythm": rhythm,
         "params": {
-            "water_hh_db": round(t_hh, 2), "water_hv_db": round(t_hv, 2),
+            "water_hh_db": round(t_hh, 2), "water_hv_db": round(t_hv, 2), "water_calibration": calib,
+            "water_thresholds_by_mode": {m: {"hh_db": round(a, 2), "hv_db": round(b, 2), **skill.get(m, {})} for m, (a, b) in thr.items()},
+            "wind_lake_frac": WIND_LAKE_FRAC,
+            "reference_lake_water_frac": lake_frac,
+            "water_rule": "HH and HV below thresholds calibrated on a permanent reference lake, or both channels at least 3 dB darker than the pixel's own median",
             "flood_rule": "HH rise >= 3 dB above pixel median, HH rise exceeds HV rise by >= 2 dB, HH >= -6 dB, not built-up",
             "mode_bias": bias, "mode_bias_corrected": corrected, "reference_mode": ref_mode,
             "kmeans_k": int(len(cents_units)), "rhythm_centroids": [[round(float(v), 3) for v in c] for c in cents_units],

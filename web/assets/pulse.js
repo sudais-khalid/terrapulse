@@ -119,9 +119,15 @@ export class Pulse {
       wp.forEach(([px, py]) => el("circle", { cx: px, cy: py, r: 2.6, class: "dot" }, svg));
     }
 
-    // Pass ticks
+    // Pass ticks; wind-roughened passes get a small marker because their water totals read low.
     this.times.forEach((t, i) => {
       el("line", { x1: x(t), x2: x(t), y1: base, y2: base + 5, class: "tick" + (this.dates[i].maturity === "VALIDATED" ? " validated" : "") }, svg);
+      if (this.dates[i].wind_roughened) {
+        const m = el("text", { x: x(t), y: base - 4, class: "wind-mark", "text-anchor": "middle" }, svg);
+        m.textContent = "wind";
+        const tip = el("title", {}, m);
+        tip.textContent = "Wind-roughened water on this pass: lakes partly looked like land, so open water reads low.";
+      }
     });
 
     // Cursors

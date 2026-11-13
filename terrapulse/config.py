@@ -68,6 +68,8 @@ LOWER_INDUS = Site(
              "Irrigated rice, sugarcane and cotton belt."),
         Zone("hyderabad", "Hyderabad city", (68.30, 25.33, 68.42, 25.44), "urban",
              "Stable bright target used as a radiometric sanity check."),
+        Zone("jhimpir-desert", "Rocky desert near Jhimpir (check area)", (67.85, 25.05, 67.95, 25.15), "desert",
+             "Dry ground that is almost as dark as water in HH. Used to check that the water rule does not misfire."),
     ),
 )
 
