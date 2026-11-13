@@ -1,0 +1,193 @@
+{
+ "type": "Feature",
+ "stac_version": "1.1.0",
+ "stac_extensions": [
+  "https://stac-extensions.github.io/sar/v1.0.0/schema.json",
+  "https://stac-extensions.github.io/sat/v1.0.0/schema.json",
+  "https://stac-extensions.github.io/projection/v2.0.0/schema.json",
+  "https://stac-extensions.github.io/raster/v1.1.0/schema.json",
+  "https://stac-extensions.github.io/classification/v1.1.0/schema.json"
+ ],
+ "id": "lower-indus-2026-05-08",
+ "collection": "lower-indus",
+ "geometry": {
+  "type": "Polygon",
+  "coordinates": [
+   [
+    [
+     67.7,
+     25.499999999999993
+    ],
+    [
+     68.9498554322575,
+     25.499999999999993
+    ],
+    [
+     68.9498554322575,
+     24.299881599416853
+    ],
+    [
+     67.7,
+     24.299881599416853
+    ],
+    [
+     67.7,
+     25.499999999999993
+    ]
+   ]
+  ]
+ },
+ "bbox": [
+  67.7,
+  24.299881599416853,
+  68.9498554322575,
+  25.499999999999993
+ ],
+ "properties": {
+  "datetime": "2026-05-08T14:06:00Z",
+  "title": "Lower Indus, Sindh, NISAR pass 2026-05-08",
+  "platform": "nisar",
+  "instruments": [
+   "l-sar"
+  ],
+  "gsd": 100.0,
+  "sar:instrument_mode": "4005",
+  "sar:frequency_band": "L",
+  "sar:center_frequency": 1.257,
+  "sar:polarizations": [
+   "HH",
+   "HV"
+  ],
+  "sar:product_type": "GCOV",
+  "sat:orbit_state": "descending",
+  "sat:relative_orbit": 164,
+  "proj:code": "EPSG:3857",
+  "proj:shape": [
+   1336,
+   1262
+  ],
+  "proj:transform": [
+   110.24823318867725,
+   0.0,
+   7536329.526704621,
+   0.0,
+   -110.24823318867809,
+   2937284.4374238425
+  ],
+  "terrapulse:maturity": "PROVISIONAL",
+  "terrapulse:crid": "P05023",
+  "terrapulse:core_series": true,
+  "terrapulse:source_granule": "NISAR_L2_PR_GCOV_019_164_D_076_4005_DHDH_A_20260508T140600_20260508T140635_P05023_N_F_J_001",
+  "terrapulse:water_threshold_hh_db": -16.0,
+  "terrapulse:water_threshold_hv_db": -23.75,
+  "terrapulse:wind_roughened": false,
+  "terrapulse:rain_3d_mm": 0.0,
+  "terrapulse:rain_affected": false
+ },
+ "links": [
+  {
+   "rel": "root",
+   "href": "../../catalog.json",
+   "type": "application/json"
+  },
+  {
+   "rel": "parent",
+   "href": "../collection.json",
+   "type": "application/json"
+  },
+  {
+   "rel": "collection",
+   "href": "../collection.json",
+   "type": "application/json"
+  },
+  {
+   "rel": "derived_from",
+   "href": "https://api.daac.asf.alaska.edu/services/search/param?output=geojson&granule_list=NISAR_L2_PR_GCOV_019_164_D_076_4005_DHDH_A_20260508T140600_20260508T140635_P05023_N_F_J_001",
+   "type": "application/geo+json",
+   "title": "Source NISAR L2 GCOV granule (ASF search)"
+  },
+  {
+   "rel": "alternate",
+   "href": "https://sudais-khalid.github.io/terrapulse/#site=lower-indus&mode=explore&layer=water&d=2026-05-08",
+   "type": "text/html",
+   "title": "Open this pass in TerraPulse"
+  }
+ ],
+ "assets": {
+  "hh": {
+   "href": "../dates/2026-05-08_hh.png",
+   "type": "image/png",
+   "title": "HH backscatter (gamma-naught, dB)",
+   "roles": [
+    "data"
+   ],
+   "raster:bands": [
+    {
+     "nodata": 0,
+     "data_type": "uint8",
+     "unit": "dB",
+     "scale": 0.15748031496062992,
+     "offset": -35.15748031496063
+    }
+   ]
+  },
+  "hv": {
+   "href": "../dates/2026-05-08_hv.png",
+   "type": "image/png",
+   "title": "HV backscatter (gamma-naught, dB)",
+   "roles": [
+    "data"
+   ],
+   "raster:bands": [
+    {
+     "nodata": 0,
+     "data_type": "uint8",
+     "unit": "dB",
+     "scale": 0.15748031496062992,
+     "offset": -35.15748031496063
+    }
+   ]
+  },
+  "class": {
+   "href": "../dates/2026-05-08_class.png",
+   "type": "image/png",
+   "title": "Open water and likely flooded vegetation",
+   "roles": [
+    "data",
+    "visual"
+   ],
+   "raster:bands": [
+    {
+     "nodata": 0,
+     "data_type": "uint8"
+    }
+   ],
+   "classification:classes": [
+    {
+     "value": 1,
+     "name": "land",
+     "description": "land",
+     "color_hint": "000000"
+    },
+    {
+     "value": 2,
+     "name": "open-water",
+     "description": "open water",
+     "color_hint": "1F6FD1"
+    },
+    {
+     "value": 3,
+     "name": "flooded-vegetation-likely",
+     "description": "flooded vegetation (likely)",
+     "color_hint": "B04FD6"
+    },
+    {
+     "value": 4,
+     "name": "no-valid-radar-data-masked-swath-gap",
+     "description": "no valid radar data (masked swath gap)",
+     "color_hint": "8A90A8"
+    }
+   ]
+  }
+ }
+}

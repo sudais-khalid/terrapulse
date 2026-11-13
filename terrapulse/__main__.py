@@ -5,6 +5,7 @@ Stages:
   ingest   stream each date's AOI into the common 100 m grid (resumable)
   rain     daily GPM IMERG rainfall for the site (or --site all), resumable
   process  compute products and write web layers to web/data/<site>
+  stac     rebuild the STAC catalog (web/data/catalog.json) from exported layers
   all      search + ingest + process
 """
 from __future__ import annotations
@@ -22,7 +23,7 @@ from .remote import get_token
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="terrapulse")
-    ap.add_argument("stage", choices=["search", "ingest", "rain", "process", "all"])
+    ap.add_argument("stage", choices=["search", "ingest", "rain", "process", "stac", "all"])
     ap.add_argument("--site", default="lower-indus", choices=sorted(SITES) + ["all"])
     ap.add_argument("--cache", default="cache", help="working directory for intermediate data")
     ap.add_argument("--web", default="web/data", help="output folder for web layers")
@@ -34,6 +35,11 @@ def main(argv=None) -> int:
 
     self_test()
     sites = list(SITES.values()) if args.site == "all" else [SITES[args.site]]
+
+    if args.stage == "stac":
+        from .stac import build as build_stac
+        print(f"STAC catalog: {build_stac(Path(args.web))}")
+        return 0
 
     if args.stage == "rain":
         from .rain_imerg import fetch

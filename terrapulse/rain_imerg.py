@@ -36,8 +36,8 @@ def granules(start: str, end: str) -> dict[str, str]:
             entries = json.load(r)["feed"]["entry"]
         for e in entries:
             m = re.search(r"3IMERG\.(\d{8})", e["title"])
-            href = next((l["href"] for l in e.get("links", []) if l["href"].startswith("https://") and l["href"].endswith(".nc4")
-                         and "opendap" not in l["href"]), None)
+            href = next((lk["href"] for lk in e.get("links", []) if lk["href"].startswith("https://") and lk["href"].endswith(".nc4")
+                         and "opendap" not in lk["href"]), None)
             if m and href:
                 d = m.group(1)
                 out[f"{d[:4]}-{d[4:6]}-{d[6:]}"] = href  # later versions in the listing overwrite earlier ones

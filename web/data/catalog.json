@@ -1,0 +1,37 @@
+{
+ "type": "Catalog",
+ "stac_version": "1.1.0",
+ "id": "terrapulse",
+ "title": "TerraPulse NISAR surface change",
+ "description": "Open water, flooded vegetation, change and seasonal rhythm mapped from NASA-ISRO NISAR L-band radar time series by the TerraPulse open-source pipeline.",
+ "links": [
+  {
+   "rel": "root",
+   "href": "./catalog.json",
+   "type": "application/json"
+  },
+  {
+   "rel": "about",
+   "href": "https://sudais-khalid.github.io/terrapulse/",
+   "type": "text/html",
+   "title": "TerraPulse web app"
+  },
+  {
+   "rel": "license",
+   "href": "https://github.com/sudais-khalid/terrapulse/blob/main/LICENSE",
+   "type": "text/html"
+  },
+  {
+   "rel": "child",
+   "href": "lower-indus/collection.json",
+   "type": "application/json",
+   "title": "TerraPulse: Lower Indus, Sindh, Pakistan"
+  },
+  {
+   "rel": "child",
+   "href": "amazon-manaus/collection.json",
+   "type": "application/json",
+   "title": "TerraPulse: Amazon at Manaus, Brazil"
+  }
+ ]
+}

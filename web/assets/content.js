@@ -219,6 +219,8 @@ function storyIndus(m) {
   ];
 }
 
+const stacUrl = () => new URL("data/catalog.json", location.href).href.split("#")[0];
+
 export function learnHTML(m) {
   const z = (k) => m.zone_boxes[k]?.name || k;
   const indus = m.site.key === "lower-indus";
@@ -269,6 +271,10 @@ export function learnHTML(m) {
   <li>Rainfall is averaged over grid cells about 10 km (IMERG) to 50 km (POWER) wide and can miss very local storms.${m.rain?.caveat ? " " + m.rain.caveat : ""}</li>
   <li>The PROVISIONAL products are calibrated but still being validated by the mission.</li>
 </ul>
+
+<h3>Open data</h3>
+<p>Every layer in this app is published as a <b>STAC catalog</b> (SpatioTemporal Asset Catalog), the open standard for Earth observation data. Each NISAR pass is one entry that links back to its source radar granule at ASF and says how to turn the stored pixels into decibels, so the maps can be reused in Python, QGIS or any STAC tool.</p>
+<p class="src"><a href="${stacUrl()}" target="_blank" rel="noopener">catalog.json</a> · <a href="https://radiantearth.github.io/stac-browser/#/external/${stacUrl().replace(/^https?:\/\//, "")}" target="_blank" rel="noopener">browse it in STAC Browser</a> · <a href="https://github.com/sudais-khalid/terrapulse" target="_blank" rel="noopener">source code and notebook</a></p>
 
 <h3>Data and credits</h3>
 <ul>

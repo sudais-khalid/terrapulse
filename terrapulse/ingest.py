@@ -26,7 +26,7 @@ class Grid:
     height: int
 
     @classmethod
-    def for_site(cls, site: Site, epsg: int) -> "Grid":
+    def for_site(cls, site: Site, epsg: int) -> Grid:
         xmin, ymin, xmax, ymax = bbox_to_utm_extent(site.bbox, epsg)
         r = float(site.res_m)
         x0, x1 = math.floor(xmin / r) * r, math.ceil(xmax / r) * r
@@ -37,7 +37,7 @@ class Grid:
         path.write_text(json.dumps(asdict(self), indent=1))
 
     @classmethod
-    def load(cls, path: Path) -> "Grid":
+    def load(cls, path: Path) -> Grid:
         return cls(**json.loads(path.read_text()))
 
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import math
+from datetime import date, timedelta
 from pathlib import Path
 
 import numpy as np
@@ -18,6 +19,8 @@ DB_MIN, DB_MAX = -35.0, 5.0
 DB_STEP = (DB_MAX - DB_MIN) / 254
 # A pass with at least this much rain (area mean, mm) over the pass day and the two days before is flagged.
 RAIN_AFFECTED_MM = 15.0
+# Class PNG palette by code: 0 outside, 1 land (transparent), 2 open water, 3 flooded vegetation, 4 no radar data.
+CLASS_PALETTE = ["#000000", "#00000000", "#1f6fd1", "#b04fd6", "#8a90a866"]
 
 
 def quantize_db(a: np.ndarray) -> np.ndarray:
@@ -90,6 +93,21 @@ def _date_entry(d: str, m: dict, i: int, params: dict) -> dict:
     }
 
 
+def flag_rain_affected(entries: list[dict], daily: dict[str, float], threshold: float = RAIN_AFFECTED_MM) -> list[str]:
+    """Add rain_3d_mm and rain_affected to each date entry, in place; return the flagged dates.
+
+    Heavy rain in the three days before a pass (the pass day and the two days before) wets
+    canopies and soil, which brightens HH and can mimic flooded vegetation, and roughens open
+    water. Days missing from `daily` are skipped; with no rain data at all the pass is not flagged.
+    """
+    for e in entries:
+        d0 = date.fromisoformat(e["date"])
+        vals = [v for v in (daily.get(str(d0 - timedelta(days=k))) for k in range(3)) if v is not None]
+        e["rain_3d_mm"] = round(sum(vals), 1) if vals else None
+        e["rain_affected"] = bool(vals) and sum(vals) >= threshold
+    return [e["date"] for e in entries if e["rain_affected"]]
+
+
 def export(stack: Stack, res: dict, site: Site, out: Path, rain: dict | None = None,
            stack_factor: int = 4, log=print) -> Path:
     out.mkdir(parents=True, exist_ok=True)
@@ -105,7 +123,7 @@ def export(stack: Stack, res: dict, site: Site, out: Path, rain: dict | None = N
         cls = res["classes"][t].copy()
         cls[cls == 0] = 4
         save_png(warp(cls), out / "dates" / f"{d}_class.png",
-                 palette=["#000000", "#00000000", "#1f6fd1", "#b04fd6", "#8a90a866"])
+                 palette=CLASS_PALETTE)
 
     def pct(a):
         q = np.zeros(a.shape, np.uint8)
@@ -154,7 +172,7 @@ def export(stack: Stack, res: dict, site: Site, out: Path, rain: dict | None = N
                   "res_m": site.res_m, "mercator_res_m": round(warp.res, 2)},
         "stack": {"file": "stack.bin", "factor": f, "width": w2, "height": h2, "order": "T,pol(hh,hv),y,x"},
         "db_quant": {"min": DB_MIN, "max": DB_MAX, "step": DB_STEP, "nodata": 0},
-        "dates": [_date_entry(d, m, i, res["params"]) for i, (d, m) in enumerate(zip(stack.dates, stack.meta))],
+        "dates": [_date_entry(d, m, i, res["params"]) for i, (d, m) in enumerate(zip(stack.dates, stack.meta, strict=True))],
         "data_gap": DATA_GAP,
         "params": res["params"],
         "classes": {"0": "outside study area", "1": "land", "2": "open water", "3": "flooded vegetation (likely)",
@@ -164,18 +182,9 @@ def export(stack: Stack, res: dict, site: Site, out: Path, rain: dict | None = N
         "zone_boxes": {z.key: {"name": z.name, "bbox": z.bbox, "kind": z.kind, "note": z.note} for z in site.zones},
         "rain": rain,
     }
-    # Rain-affected passes: heavy rain in the three days before a pass wets canopies and soil
-    # (HH brightens, can mimic flooded vegetation) and roughens water, so they are flagged.
     daily = ((rain or {}).get("series") or {}).get("all") or {}
     if daily:
-        from datetime import date as _date, timedelta
-        for e in manifest["dates"]:
-            d0 = _date.fromisoformat(e["date"])
-            vals = [daily.get(str(d0 - timedelta(days=k))) for k in range(3)]
-            vals = [v for v in vals if v is not None]
-            e["rain_3d_mm"] = round(sum(vals), 1) if vals else None
-            e["rain_affected"] = bool(vals and sum(vals) >= RAIN_AFFECTED_MM)
-        flagged = [e["date"] for e in manifest["dates"] if e.get("rain_affected")]
+        flagged = flag_rain_affected(manifest["dates"], daily)
         manifest["params"]["rain_affected_mm_3d"] = RAIN_AFFECTED_MM
         log(f"  rain-affected passes (>= {RAIN_AFFECTED_MM} mm in 3 days): {flagged}")
     manifest["site"]["tagline"] = site.tagline
@@ -183,6 +192,8 @@ def export(stack: Stack, res: dict, site: Site, out: Path, rain: dict | None = N
     manifest["site"]["dry_ref"] = site.dry_ref
     (out / "manifest.json").write_text(json.dumps(manifest, indent=1))
     _update_index(out.parent, site, manifest)
+    from .stac import build as build_stac
+    build_stac(out.parent, log=log)
     size = sum(p.stat().st_size for p in out.rglob("*") if p.is_file()) / 1e6
     log(f"  wrote {out} ({size:.1f} MB)")
     return out

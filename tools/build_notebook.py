@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PKG = ROOT / "terrapulse"
 OUT = ROOT / "notebooks" / "terrapulse_pipeline.ipynb"
 ORDER = ["__init__.py", "config.py", "geo.py", "remote.py", "catalog.py", "ingest.py",
-         "products.py", "export.py", "rain.py", "rain_imerg.py", "__main__.py"]
+         "products.py", "export.py", "rain.py", "rain_imerg.py", "stac.py", "__main__.py"]
 
 
 def md(text: str) -> dict:

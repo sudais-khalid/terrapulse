@@ -1,0 +1,9 @@
+# Normalise line endings in the repository.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.bin binary
+
+# Generated files: keep them out of diffs and GitHub language statistics.
+notebooks/*.ipynb linguist-generated=true
+web/data/** linguist-generated=true -diff

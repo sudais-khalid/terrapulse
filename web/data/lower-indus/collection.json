@@ -1,0 +1,590 @@
+{
+ "type": "Collection",
+ "stac_version": "1.1.0",
+ "stac_extensions": [
+  "https://stac-extensions.github.io/sar/v1.0.0/schema.json",
+  "https://stac-extensions.github.io/sat/v1.0.0/schema.json",
+  "https://stac-extensions.github.io/projection/v2.0.0/schema.json",
+  "https://stac-extensions.github.io/raster/v1.1.0/schema.json",
+  "https://stac-extensions.github.io/classification/v1.1.0/schema.json"
+ ],
+ "id": "lower-indus",
+ "title": "TerraPulse: Lower Indus, Sindh, Pakistan",
+ "description": "Floods, wetlands and rice on the lower Indus. Surface change layers from 28 NISAR L2 GCOV passes (track 164, frame 76, descending), resampled to 100 m and published as 8-bit PNGs in Web Mercator. Open water uses HH and HV thresholds calibrated per radar mode on a permanent water body (keenjhar) against never-flooded land (jhimpir-desert). Passes are flagged when wind roughened the reference water or when at least 15.0 mm of GPM IMERG rain fell in the three days before.",
+ "keywords": [
+  "NISAR",
+  "SAR",
+  "L-band",
+  "GCOV",
+  "open water",
+  "flooded vegetation",
+  "change detection",
+  "Pakistan"
+ ],
+ "license": "Apache-2.0",
+ "providers": [
+  {
+   "name": "NASA-ISRO SAR mission (NASA JPL, ISRO)",
+   "roles": [
+    "producer",
+    "licensor"
+   ],
+   "url": "https://nisar.jpl.nasa.gov/"
+  },
+  {
+   "name": "Alaska Satellite Facility DAAC",
+   "roles": [
+    "host"
+   ],
+   "url": "https://asf.alaska.edu/"
+  },
+  {
+   "name": "TerraPulse (Sudais Khalid, Sunnia Aslam)",
+   "roles": [
+    "processor",
+    "host"
+   ],
+   "url": "https://github.com/sudais-khalid/terrapulse"
+  }
+ ],
+ "extent": {
+  "spatial": {
+   "bbox": [
+    [
+     67.7,
+     24.299881599416853,
+     68.9498554322575,
+     25.499999999999993
+    ]
+   ]
+  },
+  "temporal": {
+   "interval": [
+    [
+     "2025-11-21T14:05:56Z",
+     "2026-10-23T14:05:54Z"
+    ]
+   ]
+  }
+ },
+ "summaries": {
+  "platform": [
+   "nisar"
+  ],
+  "instruments": [
+   "l-sar"
+  ],
+  "gsd": [
+   100.0
+  ],
+  "sar:frequency_band": [
+   "L"
+  ],
+  "sar:product_type": [
+   "GCOV"
+  ],
+  "sar:polarizations": [
+   "HH",
+   "HV"
+  ],
+  "sar:instrument_mode": [
+   "2005",
+   "4005"
+  ],
+  "sat:orbit_state": [
+   "descending"
+  ],
+  "sat:relative_orbit": [
+   164
+  ],
+  "terrapulse:maturity": [
+   "PROVISIONAL",
+   "VALIDATED"
+  ]
+ },
+ "item_assets": {
+  "hh": {
+   "type": "image/png",
+   "title": "HH backscatter (gamma-naught, dB)",
+   "roles": [
+    "data"
+   ],
+   "raster:bands": [
+    {
+     "nodata": 0,
+     "data_type": "uint8",
+     "unit": "dB",
+     "scale": 0.15748031496062992,
+     "offset": -35.15748031496063
+    }
+   ]
+  },
+  "hv": {
+   "type": "image/png",
+   "title": "HV backscatter (gamma-naught, dB)",
+   "roles": [
+    "data"
+   ],
+   "raster:bands": [
+    {
+     "nodata": 0,
+     "data_type": "uint8",
+     "unit": "dB",
+     "scale": 0.15748031496062992,
+     "offset": -35.15748031496063
+    }
+   ]
+  },
+  "class": {
+   "type": "image/png",
+   "title": "Open water and likely flooded vegetation",
+   "roles": [
+    "data",
+    "visual"
+   ],
+   "classification:classes": [
+    {
+     "value": 1,
+     "name": "land",
+     "description": "land",
+     "color_hint": "000000"
+    },
+    {
+     "value": 2,
+     "name": "open-water",
+     "description": "open water",
+     "color_hint": "1F6FD1"
+    },
+    {
+     "value": 3,
+     "name": "flooded-vegetation-likely",
+     "description": "flooded vegetation (likely)",
+     "color_hint": "B04FD6"
+    },
+    {
+     "value": 4,
+     "name": "no-valid-radar-data-masked-swath-gap",
+     "description": "no valid radar data (masked swath gap)",
+     "color_hint": "8A90A8"
+    }
+   ]
+  }
+ },
+ "assets": {
+  "water_occurrence": {
+   "href": "products/water_occurrence.png",
+   "type": "image/png",
+   "title": "Share of passes with open water",
+   "roles": [
+    "data"
+   ],
+   "proj:code": "EPSG:3857",
+   "proj:shape": [
+    1336,
+    1262
+   ],
+   "proj:transform": [
+    110.24823318867725,
+    0.0,
+    7536329.526704621,
+    0.0,
+    -110.24823318867809,
+    2937284.4374238425
+   ],
+   "raster:bands": [
+    {
+     "nodata": 0,
+     "data_type": "uint8",
+     "unit": "1",
+     "scale": 0.01,
+     "offset": -0.01
+    }
+   ]
+  },
+  "flooded_veg_frequency": {
+   "href": "products/flooded_veg_frequency.png",
+   "type": "image/png",
+   "title": "Share of passes with likely flooded vegetation",
+   "roles": [
+    "data"
+   ],
+   "proj:code": "EPSG:3857",
+   "proj:shape": [
+    1336,
+    1262
+   ],
+   "proj:transform": [
+    110.24823318867725,
+    0.0,
+    7536329.526704621,
+    0.0,
+    -110.24823318867809,
+    2937284.4374238425
+   ],
+   "raster:bands": [
+    {
+     "nodata": 0,
+     "data_type": "uint8",
+     "unit": "1",
+     "scale": 0.01,
+     "offset": -0.01
+    }
+   ]
+  },
+  "hv_range": {
+   "href": "products/hv_range.png",
+   "type": "image/png",
+   "title": "Vegetation swing: HV 95th minus 5th percentile (dB)",
+   "roles": [
+    "data"
+   ],
+   "proj:code": "EPSG:3857",
+   "proj:shape": [
+    1336,
+    1262
+   ],
+   "proj:transform": [
+    110.24823318867725,
+    0.0,
+    7536329.526704621,
+    0.0,
+    -110.24823318867809,
+    2937284.4374238425
+   ],
+   "raster:bands": [
+    {
+     "nodata": 0,
+     "data_type": "uint8",
+     "unit": "dB",
+     "scale": 0.05905511811023622,
+     "offset": -0.05905511811023622
+    }
+   ]
+  },
+  "hh_median": {
+   "href": "products/hh_median.png",
+   "type": "image/png",
+   "title": "Median HH backscatter over the year (dB)",
+   "roles": [
+    "data"
+   ],
+   "proj:code": "EPSG:3857",
+   "proj:shape": [
+    1336,
+    1262
+   ],
+   "proj:transform": [
+    110.24823318867725,
+    0.0,
+    7536329.526704621,
+    0.0,
+    -110.24823318867809,
+    2937284.4374238425
+   ],
+   "raster:bands": [
+    {
+     "nodata": 0,
+     "data_type": "uint8",
+     "unit": "dB",
+     "scale": 0.15748031496062992,
+     "offset": -35.15748031496063
+    }
+   ]
+  },
+  "hv_median": {
+   "href": "products/hv_median.png",
+   "type": "image/png",
+   "title": "Median HV backscatter over the year (dB)",
+   "roles": [
+    "data"
+   ],
+   "proj:code": "EPSG:3857",
+   "proj:shape": [
+    1336,
+    1262
+   ],
+   "proj:transform": [
+    110.24823318867725,
+    0.0,
+    7536329.526704621,
+    0.0,
+    -110.24823318867809,
+    2937284.4374238425
+   ],
+   "raster:bands": [
+    {
+     "nodata": 0,
+     "data_type": "uint8",
+     "unit": "dB",
+     "scale": 0.15748031496062992,
+     "offset": -35.15748031496063
+    }
+   ]
+  },
+  "rhythm": {
+   "href": "products/rhythm.png",
+   "type": "image/png",
+   "title": "Surface rhythm: places grouped by how their radar signal moved through the year",
+   "roles": [
+    "data"
+   ],
+   "proj:code": "EPSG:3857",
+   "proj:shape": [
+    1336,
+    1262
+   ],
+   "proj:transform": [
+    110.24823318867725,
+    0.0,
+    7536329.526704621,
+    0.0,
+    -110.24823318867809,
+    2937284.4374238425
+   ],
+   "raster:bands": [
+    {
+     "nodata": 0,
+     "data_type": "uint8"
+    }
+   ],
+   "classification:classes": [
+    {
+     "value": 1,
+     "name": "permanent-water",
+     "description": "Permanent water (The still pool)",
+     "color_hint": "1D4E89"
+    },
+    {
+     "value": 2,
+     "name": "seasonal-water-and-wetland",
+     "description": "Seasonal water and wetland (The tide)",
+     "color_hint": "3FA7D6"
+    },
+    {
+     "value": 3,
+     "name": "flood-prone-vegetation",
+     "description": "Flood-prone vegetation (The swirl)",
+     "color_hint": "7B5EA7"
+    },
+    {
+     "value": 4,
+     "name": "active-cropland",
+     "description": "Active cropland (The harvest waltz)",
+     "color_hint": "E0A526"
+    },
+    {
+     "value": 5,
+     "name": "woody-vegetation-forest-and-orchards",
+     "description": "Woody vegetation, forest and orchards (The slow sway)",
+     "color_hint": "2E8B57"
+    },
+    {
+     "value": 6,
+     "name": "built-up-area",
+     "description": "Built-up area (The steady beat)",
+     "color_hint": "D1495B"
+    },
+    {
+     "value": 7,
+     "name": "bare-soil-and-desert",
+     "description": "Bare soil and desert (The quiet floor)",
+     "color_hint": "C2B280"
+    },
+    {
+     "value": 8,
+     "name": "sparse-vegetation-and-fallow",
+     "description": "Sparse vegetation and fallow (The shuffle)",
+     "color_hint": "9AA36B"
+    }
+   ]
+  },
+  "manifest": {
+   "href": "manifest.json",
+   "type": "application/json",
+   "roles": [
+    "metadata"
+   ],
+   "title": "TerraPulse manifest: calibration, quality flags, zone statistics, rainfall"
+  },
+  "stack": {
+   "href": "stack.bin",
+   "type": "application/octet-stream",
+   "roles": [
+    "data"
+   ],
+   "title": "Coarse HH/HV time series cube, uint8 [time, pol, y, x], same dB encoding",
+   "raster:bands": [
+    {
+     "nodata": 0,
+     "data_type": "uint8",
+     "unit": "dB",
+     "scale": 0.15748031496062992,
+     "offset": -35.15748031496063
+    }
+   ]
+  }
+ },
+ "links": [
+  {
+   "rel": "root",
+   "href": "../catalog.json",
+   "type": "application/json"
+  },
+  {
+   "rel": "parent",
+   "href": "../catalog.json",
+   "type": "application/json"
+  },
+  {
+   "rel": "license",
+   "href": "https://github.com/sudais-khalid/terrapulse/blob/main/LICENSE",
+   "type": "text/html"
+  },
+  {
+   "rel": "about",
+   "href": "https://sudais-khalid.github.io/terrapulse/#site=lower-indus",
+   "type": "text/html",
+   "title": "Open in TerraPulse"
+  },
+  {
+   "rel": "item",
+   "href": "items/2025-11-21.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2025-12-03.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2025-12-15.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2025-12-27.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-01-08.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-01-20.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-02-01.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-02-13.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-02-25.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-03-09.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-03-21.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-04-02.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-04-14.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-04-26.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-05-08.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-05-20.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-06-01.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-06-13.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-06-25.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-07-07.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-07-19.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-08-12.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-08-24.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-09-05.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-09-17.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-09-29.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-10-11.json",
+   "type": "application/geo+json"
+  },
+  {
+   "rel": "item",
+   "href": "items/2026-10-23.json",
+   "type": "application/geo+json"
+  }
+ ]
+}

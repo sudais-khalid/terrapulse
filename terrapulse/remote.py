@@ -174,7 +174,7 @@ def fetch_chunks(signed: SignedUrl, refs: list[ChunkRef], decode, workers: int =
                 if len(buf) != end - start:
                     raise RuntimeError(f"short read {len(buf)} != {end - start}")
                 return end - start, [(m, decode(buf[m.offset - start: m.offset - start + m.size], m)) for m in members]
-            except Exception as e:  # network hiccup: back off and retry
+            except Exception:  # network hiccup: back off and retry
                 if attempt == retries - 1:
                     raise
                 time.sleep(2 ** attempt)
@@ -186,8 +186,7 @@ def fetch_chunks(signed: SignedUrl, refs: list[ChunkRef], decode, workers: int =
         for fut in as_completed(futures):
             nbytes, items = fut.result()
             done_bytes += nbytes
-            for item in items:
-                yield item
+            yield from items
             now = time.time()
             if now - last > 10 or done_bytes == total:
                 rate = done_bytes / max(now - t0, 1e-6) / 1e6
