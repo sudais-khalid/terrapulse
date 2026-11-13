@@ -12,7 +12,10 @@
   ],
   "track": 164,
   "frame": 76,
-  "direction": "DESCENDING"
+  "direction": "DESCENDING",
+  "tagline": "Floods, wetlands and rice on the lower Indus",
+  "water_ref": "keenjhar",
+  "dry_ref": "jhimpir-desert"
  },
  "image": {
   "width": 1262,
@@ -654,7 +657,7 @@
   },
   {
    "code": 5,
-   "label": "Woody vegetation and orchards",
+   "label": "Woody vegetation, forest and orchards",
    "dance": "The slow sway",
    "color": "#2e8b57"
   },

@@ -1,0 +1,19 @@
+{
+ "sites": [
+  {
+   "key": "lower-indus",
+   "name": "Lower Indus, Sindh",
+   "country": "Pakistan",
+   "tagline": "Floods, wetlands and rice on the lower Indus",
+   "bbox": [
+    67.7,
+    24.3,
+    68.95,
+    25.5
+   ],
+   "passes": 28,
+   "first": "2025-11-21",
+   "last": "2026-10-23"
+  }
+ ]
+}

@@ -1,0 +1,28 @@
+1
+00:00:00,000 --> 00:00:02,000
+We are team TERRAPULSE, from Topi, Pakistan.
+
+2
+00:00:02,000 --> 00:00:05,000
+During the monsoon, clouds blind optical satellites.
+NISAR's radar sees straight through.
+
+3
+00:00:05,000 --> 00:00:10,000
+TerraPulse: reading Earth's signals,
+revealing its changes.
+
+4
+00:00:10,000 --> 00:00:20,000
+A year of NISAR radar shows rice fields flooding,
+growing and being harvested: twelve hundred square
+kilometres of rice standing in water.
+
+5
+00:00:20,000 --> 00:00:27,000
+From the Indus to the Amazon, anyone can measure,
+compare and download the change.
+
+6
+00:00:27,000 --> 00:00:30,000
+Open source, built on NASA NISAR data.

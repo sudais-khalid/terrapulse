@@ -18,18 +18,24 @@
       <span class="wordmark">TerraPulse</span>
       <span class="tagline">Reading Earth's signals. Revealing its changes.</span>
     </div>
-    <nav class="modes" aria-label="Mode">
-      <button class="mode" data-mode="story" aria-pressed="true">Story</button>
-      <button class="mode" data-mode="explore" aria-pressed="false">Explore</button>
-      <button class="mode" data-mode="learn" aria-pressed="false">How it works</button>
-    </nav>
+    <div class="top-right">
+      <label class="site-pick"><span class="sr-only">Study site</span><select id="site-select" aria-label="Study site"></select></label>
+      <nav class="modes" aria-label="Mode">
+        <button class="mode" data-mode="story" aria-pressed="true">Story</button>
+        <button class="mode" data-mode="explore" aria-pressed="false">Explore</button>
+        <button class="mode" data-mode="learn" aria-pressed="false"><span class="full">How it works</span><span class="short">About</span></button>
+      </nav>
+      <button class="icon-btn share" id="share" title="Copy a link to this view" aria-label="Copy a link to this view">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
   </header>
 
   <main class="stage">
     <div id="map" class="map" aria-label="Map"></div>
     <div id="map-b" class="map map-b" aria-hidden="true"></div>
     <div id="swipe" class="swipe" hidden>
-      <div class="swipe-handle" role="slider" tabindex="0" aria-label="Compare divider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"></div>
+      <div class="swipe-handle" role="slider" title="Drag to compare" tabindex="0" aria-label="Compare divider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"></div>
       <span class="swipe-tag swipe-tag-a" id="swipe-tag-a"></span>
       <span class="swipe-tag swipe-tag-b" id="swipe-tag-b"></span>
     </div>
@@ -54,10 +60,26 @@
         <div id="layer-legend" class="legend"></div>
 
         <div class="control-block" id="compare-block">
-          <label class="switch"><input type="checkbox" id="compare-toggle"> <span>Compare two dates</span></label>
-          <div class="compare-dates" id="compare-dates" hidden>
-            <label>Left <select id="date-a"></select></label>
-            <label>Right <select id="date-b"></select></label>
+          <label class="switch"><input type="checkbox" id="compare-toggle"> <span>Compare side by side</span></label>
+          <div id="compare-opts" hidden>
+            <div class="seg" role="radiogroup" aria-label="Compare with">
+              <label><input type="radio" name="cmpwith" value="date" checked> Another pass</label>
+              <label><input type="radio" name="cmpwith" value="optical"> Optical, same day</label>
+            </div>
+            <div class="compare-dates" id="compare-dates">
+              <label>Left <select id="date-a"></select></label>
+              <label>Right <select id="date-b"></select></label>
+            </div>
+            <div class="compare-dates" id="optical-opts" hidden>
+              <label>Optical source
+                <select id="optical-src">
+                  <option value="modis">MODIS Terra, daily, 250 m</option>
+                  <option value="hls-s30">Sentinel-2 (HLS), 30 m</option>
+                  <option value="hls-l30">Landsat (HLS), 30 m</option>
+                </select>
+              </label>
+            </div>
+            <p class="hint" id="optical-hint" hidden>Clouds are the point: optical cameras need sunlight and clear skies, radar does not. HLS appears only on days a clear Landsat or Sentinel-2 scene exists.</p>
           </div>
         </div>
 
@@ -72,12 +94,24 @@
           <input type="range" id="opacity" min="0" max="1" step="0.05" value="0.9">
         </div>
 
+        <h2 class="pane-title">Tools</h2>
+        <div class="tool-row">
+          <button class="btn ghost" id="measure">Measure an area</button>
+          <button class="btn ghost" id="csv-zone">Download data (CSV)</button>
+        </div>
+        <p class="hint">Measure: drag a box on the map to get its open water and flooded vegetation for every pass. Click any spot for its radar history.</p>
+
+        <h2 class="pane-title">Notable changes</h2>
+        <div class="events" id="events"></div>
+
         <h2 class="pane-title">Places</h2>
         <div class="places" id="places"></div>
 
         <h2 class="pane-title">Anywhere on Earth</h2>
-        <p class="hint">Switch to <em>NISAR worldwide</em> in Layers, then fly anywhere. NASA GIBS serves NISAR radar mosaics for every day since October 2025.</p>
+        <p class="hint">Switch to <em>NISAR worldwide</em>, fly anywhere, then find the days NISAR imaged the map centre. NASA GIBS serves NISAR radar mosaics for every day since October 2025.</p>
         <div class="places" id="world-places"></div>
+        <div class="tool-row"><button class="btn ghost" id="find-passes">Find NISAR passes at map centre</button></div>
+        <div class="places" id="pass-list"></div>
       </section>
 
       <!-- Learn -->
@@ -88,12 +122,13 @@
 
     <aside class="inspector" id="inspector" hidden>
       <header>
-        <h2>Pixel history</h2>
-        <button class="icon-btn" id="close-inspector" aria-label="Close pixel history">&times;</button>
+        <h2 id="insp-title">Pixel history</h2>
+        <button class="icon-btn" id="close-inspector" aria-label="Close panel">&times;</button>
       </header>
       <p class="coords" id="insp-coords"></p>
-      <svg id="insp-chart" class="insp-chart" role="img" aria-label="Radar backscatter over time at the selected point"></svg>
+      <svg id="insp-chart" class="insp-chart" role="img" aria-label="Values over time at the selected place"></svg>
       <p class="insp-read" id="insp-read"></p>
+      <button class="btn ghost small" id="insp-csv" hidden>Download CSV</button>
     </aside>
 
     <div class="date-chip" id="date-chip" aria-live="polite" hidden></div>
@@ -102,7 +137,11 @@
 
   <footer class="pulse" id="pulse">
     <div class="pulse-head">
-      <button class="play" id="play" aria-label="Play through the year"><span class="play-icon"></span></button>
+      <button class="play" id="play" aria-label="Play through the year" aria-pressed="false"><span class="play-icon"></span></button>
+      <button class="listen" id="listen" aria-pressed="false" title="Play the year as sound: pitch is open water, the second voice is flooded vegetation, the hiss is rain">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zM16 8a5 5 0 0 1 0 8M18.5 5.5a8.5 8.5 0 0 1 0 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Listen</span>
+      </button>
       <div class="pulse-label">
         <span class="pulse-title" id="pulse-title">Open water, whole study area</span>
         <span class="pulse-sub" id="pulse-sub"></span>

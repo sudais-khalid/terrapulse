@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TerraPulse Slides</title>
+  <meta name="description" content="Seven-slide summary of TerraPulse, a NISAR radar app for floods, wetlands and crops, NASA Space Apps Challenge 2026.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Big+Shoulders+Display:wght@600;800&family=Martian+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --indigo: #0e1530; --panel: #151d3b; --panel-2: #1c2650; --line: #2b3666;
+      --ink: #ece6d6; --ink-dim: #a3a8bf; --ink-faint: #6f7697;
+      --madder: #d0563f; --water: #4a9df8; --flood: #c45ad8; --veg: #8cc265;
+      --display: "Big Shoulders Display", "Arial Narrow", sans-serif;
+      --body: "Atkinson Hyperlegible", system-ui, sans-serif;
+      --mono: "Martian Mono", ui-monospace, monospace;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: #070b1c; color: var(--ink); font-family: var(--body); }
+    .deck { height: 100%; display: grid; place-items: center; }
+    .slide {
+      width: min(100vw, calc(100vh * 16 / 9)); aspect-ratio: 16 / 9; background: var(--indigo);
+      position: relative; overflow: hidden; display: none; padding: 4.2% 5% 4.6%; font-size: min(1.6vw, 2.85vh);
+    }
+    .slide.on { display: grid; }
+    .kicker { font: 500 0.72em/1.3 var(--mono); color: var(--ink-faint); text-transform: uppercase; letter-spacing: .1em; }
+    h1, h2 { font-family: var(--display); font-weight: 800; text-transform: uppercase; margin: 0; letter-spacing: .02em; }
+    h1 { font-size: 5.6em; line-height: .9; }
+    h2 { font-size: 2.6em; line-height: .95; margin: .25em 0 .5em; }
+    p, li { font-size: 1em; line-height: 1.45; margin: 0 0 .55em; }
+    ul { margin: 0; padding-left: 1.1em; }
+    li { margin-bottom: .45em; }
+    b { color: #fff; }
+    .num { font: 800 2.4em/1 var(--display); }
+    .mono { font-family: var(--mono); font-size: .8em; color: var(--ink-dim); }
+    .two { display: grid; grid-template-columns: 1fr 1.25fr; gap: 4%; align-items: center; height: 100%; }
+    .shot { width: 100%; border-radius: .6em; border: 1px solid var(--line); box-shadow: 0 1em 3em rgba(0,0,0,.45); display: block; }
+    .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8em; margin: .8em 0 1em; }
+    .stat { border-top: 2px solid var(--line); padding-top: .4em; }
+    .stat span { display: block; color: var(--ink-dim); font-size: .78em; line-height: 1.3; margin-top: .2em; }
+    .flow { display: flex; flex-wrap: wrap; gap: .45em; align-items: center; margin: .6em 0 1em; }
+    .flow span { background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; padding: .32em .8em; font-size: .82em; }
+    .flow i { color: var(--madder); font-style: normal; }
+    .pulse-line { position: absolute; left: 0; right: 0; bottom: 7%; height: 18%; opacity: .9; }
+    .title-bg { position: absolute; inset: 0 0 0 42%; background: url(assets/shots/rhythm_map.jpg) center/cover; opacity: .55;
+      mask-image: linear-gradient(90deg, transparent, #000 35%); -webkit-mask-image: linear-gradient(90deg, transparent, #000 35%); }
+    .title-wrap { position: relative; align-self: center; max-width: 60%; }
+    .tag { font-size: 1.35em; color: var(--ink-dim); margin: .4em 0 1.4em; }
+    .team { font: 400 .8em/1.6 var(--mono); color: var(--ink-dim); }
+    .foot { position: absolute; left: 5%; right: 5%; bottom: 3%; display: flex; justify-content: space-between; font: 400 .62em var(--mono); color: var(--ink-faint); }
+    .legend-dot { display: inline-block; width: .7em; height: .7em; border-radius: 2px; margin-right: .3em; vertical-align: middle; }
+    .controls { position: fixed; top: 12px; right: 16px; display: flex; gap: 8px; font: 400 12px var(--mono); color: var(--ink-faint); }
+    .controls button { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; cursor: pointer; font: inherit; }
+    .controls a { color: var(--ink-dim); align-self: center; }
+    @media print {
+      @page { size: 1280px 720px; margin: 0; }
+      body { background: var(--indigo); }
+      .deck { display: block; }
+      .slide { display: grid !important; width: 1280px; height: 720px; font-size: 20px; page-break-after: always; break-after: page; }
+      .controls { display: none; }
+    }
+    @media (prefers-reduced-motion: no-preference) { .slide.on { animation: in .35s ease-out; } @keyframes in { from { opacity: 0; transform: translateY(6px); } } }
+  </style>
+</head>
+<body>
+<main class="deck" id="deck">
+
+  <!-- 1. Title -->
+  <section class="slide on" aria-label="Slide 1 of 7: title">
+    <div class="title-bg" aria-hidden="true"></div>
+    <div class="title-wrap">
+      <div class="kicker">NASA Space Apps Challenge 2026 · Dancing with the SARs</div>
+      <h1>Terra<br>Pulse</h1>
+      <p class="tag">Reading Earth's signals. Revealing its changes.</p>
+      <p>A web app that turns NISAR L-band radar into a living map of floods, wetlands and harvests, from the lower Indus in Pakistan to the Amazon, and anywhere NISAR flies.</p>
+      <p class="team">Team TERRAPULSE · Sudais Khalid · Sunnia Aslam · Topi, Pakistan</p>
+    </div>
+    <svg class="pulse-line" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 70 H330 L360 20 L395 92 L430 40 L455 70 H620 L640 55 L660 80 L680 70 H1000" fill="none" stroke="#d0563f" stroke-width="3" stroke-linejoin="round"/></svg>
+  </section>
+
+  <!-- 2. Problem -->
+  <section class="slide" aria-label="Slide 2 of 7: the problem">
+    <div class="two">
+      <div>
+        <div class="kicker">The problem</div>
+        <h2>The monsoon hides what matters</h2>
+        <ul>
+          <li>Floods, wetlands and rice fields in Sindh change <b>week by week</b>, exactly when <b>monsoon clouds</b> blind optical satellites.</li>
+          <li>On <b>7 July 2026</b> NASA MODIS saw mostly cloud over the delta. NISAR, the same day, mapped every flooded field.</li>
+          <li>Radar data is powerful but hard to read: HDF5 files of <b>6 GB</b> each, decibels, polarisations.</li>
+          <li>Disaster managers, farmers and teachers need <b>a map and a number</b>, not a file.</li>
+        </ul>
+      </div>
+      <img class="shot" src="assets/shots/clouds.jpg" alt="Left: NISAR water map of the lower Indus on 7 July 2026. Right: MODIS optical image of the same day, mostly cloud.">
+    </div>
+    <div class="foot"><span>TerraPulse</span><span>2 / 7</span></div>
+  </section>
+
+  <!-- 3. Data -->
+  <section class="slide" aria-label="Slide 3 of 7: data">
+    <div>
+      <div class="kicker">NASA data</div>
+      <h2>A year of radar, read in minutes</h2>
+      <div class="stat-row">
+        <div class="stat"><div class="num">28</div><span>NISAR GCOV passes over the lower Indus, Nov 2025 to Oct 2026, one processing version</span></div>
+        <div class="stat"><div class="num">10</div><span>NISAR passes over the Amazon at Manaus, Jun to Nov 2026</span></div>
+        <div class="stat"><div class="num">~35 s</div><span>per 6 GB file: we stream only the study area's compressed chunks</span></div>
+      </div>
+      <div class="flow"><span>ASF DAAC archive</span><i>→</i><span>parallel HDF5 chunk streaming</span><i>→</i><span>NISAR validity mask</span><i>→</i><span>100 m grid</span><i>→</i><span>calibrated water, flooded vegetation, rhythm</span><i>→</i><span>web app</span></div>
+      <ul>
+        <li><b>NISAR L2 GCOV</b> (NASA/JPL and ISRO, ASF DAAC): HH and HV backscatter, terrain corrected.</li>
+        <li><b>GPM IMERG</b> daily rainfall · <b>NASA GIBS</b> NISAR worldwide mosaics · <b>MODIS</b> and <b>HLS</b> optical for comparison · <b>ASF Search API</b> to find passes anywhere.</li>
+      </ul>
+    </div>
+    <div class="foot"><span>TerraPulse</span><span>3 / 7</span></div>
+  </section>
+
+  <!-- 4. Method -->
+  <section class="slide" aria-label="Slide 4 of 7: how it works">
+    <div class="two">
+      <div>
+        <div class="kicker">The science</div>
+        <h2>Calibrated, checked, honest</h2>
+        <ul>
+          <li><b>Open water</b>: HH and HV thresholds chosen per radar mode to best separate a permanent lake (Keenjhar) from dry desert (Jhimpir). A field that turns 3 dB darker than its own normal counts as newly flooded.</li>
+          <li><b>Flooded vegetation</b>: L-band passes through the canopy and double-bounces off stems standing in water, so HH jumps.</li>
+          <li><b>Wind check</b>: when the reference lake stops looking like water, the pass is flagged, not misread as drought.</li>
+          <li><b>Surface rhythm</b>: k-means on each pixel's yearly signal, named by physical rules.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="stat-row" style="grid-template-columns:1fr 1fr">
+          <div class="stat"><div class="num">88 to 104</div><span>km² Keenjhar Lake on 24 of 28 passes (median 92)</span></div>
+          <div class="stat"><div class="num">14.5 to 18.4</div><span>km² Haleji Lake, an independent check, not used to calibrate</span></div>
+          <div class="stat"><div class="num">~1 dB</div><span>brighter dark targets in the 40 MHz mode, corrected per mode</span></div>
+          <div class="stat"><div class="num">12 to 17%</div><span>of desert pixels pass the water test: a stated limit</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span>TerraPulse</span><span>4 / 7</span></div>
+  </section>
+
+  <!-- 5. Findings -->
+  <section class="slide" aria-label="Slide 5 of 7: findings">
+    <div class="two">
+      <div>
+        <div class="kicker">What the radar saw</div>
+        <h2>The rice waltz of Sindh</h2>
+        <ul>
+          <li><b>7 July</b>: left-bank fields flood for rice transplanting, open water jumps by <b>87 km²</b> in 24 days.</li>
+          <li><b>17 September</b>: rice standing in water peaks at <b>1,218 km²</b> across the area, <b>+217 km²</b> on the left bank in 24 days.</li>
+          <li><b>October</b>: the purple fades as the harvest comes in.</li>
+          <li>After the <b>early August</b> monsoon rain, the Badin coastal lagoons gained about <b>62 km²</b> of open water.</li>
+          <li><b>14 April</b>: wind roughened Keenjhar Lake; flagged, not mistaken for drying.</li>
+        </ul>
+      </div>
+      <img class="shot" src="assets/shots/rice.jpg" alt="Flooded vegetation in purple across the left-bank rice belt on 17 September 2026, with the timeline below.">
+    </div>
+    <div class="foot"><span>TerraPulse</span><span>5 / 7</span></div>
+  </section>
+
+  <!-- 6. App -->
+  <section class="slide" aria-label="Slide 6 of 7: the app">
+    <div class="two">
+      <div>
+        <div class="kicker">The app</div>
+        <h2>Watch the land dance</h2>
+        <ul>
+          <li><b>Story</b>: chapters whose numbers are computed live from the data.</li>
+          <li><b>Pulse strip</b>: open water, flooded vegetation and rainfall for every pass. Press play, or <b>listen</b>: the year becomes music.</li>
+          <li><b>Compare</b> two passes, or radar against the <b>optical image of the same day</b>.</li>
+          <li><b>Measure</b> any area, click any pixel for its history, <b>download CSV</b>.</li>
+          <li><b>Anywhere on Earth</b>: NISAR mosaics and pass dates for any point.</li>
+        </ul>
+      </div>
+      <img class="shot" src="assets/shots/area.jpg" alt="Explore mode showing what changed between two passes, with an area analysis chart.">
+    </div>
+    <div class="foot"><span>TerraPulse</span><span>6 / 7</span></div>
+  </section>
+
+  <!-- 7. Impact -->
+  <section class="slide" aria-label="Slide 7 of 7: impact">
+    <div class="two">
+      <div>
+        <div class="kicker">Impact</div>
+        <h2>From one delta to every river</h2>
+        <ul>
+          <li><b>Disaster managers</b> (PDMA Sindh): where water stood after a storm, even under cloud.</li>
+          <li><b>Irrigation and agriculture</b>: when rice was flooded, grown and harvested, field by field.</li>
+          <li><b>Wetland managers</b>: Ramsar lakes and lagoons, pass by pass.</li>
+          <li><b>Teachers and the public</b>: radar explained in plain words and sound.</li>
+          <li><b>Scales</b>: a new site is a few lines of config and one Colab run. Open source, Apache 2.0.</li>
+        </ul>
+        <p class="mono" style="margin-top:1em">Live app: <a href="index.html" style="color:var(--water)">TerraPulse</a> · code and notebook in the project repository</p>
+      </div>
+      <img class="shot" src="assets/shots/world.jpg" alt="NISAR worldwide mosaic over the Amazon at Manaus with a list of NISAR pass dates.">
+    </div>
+    <div class="foot"><span>TerraPulse · Team TERRAPULSE</span><span>7 / 7</span></div>
+  </section>
+</main>
+
+<div class="controls" aria-label="Slide controls">
+  <button id="prev" aria-label="Previous slide">Back</button>
+  <button id="next" aria-label="Next slide">Next</button>
+  <a href="index.html">Open the app</a>
+</div>
+
+<script>
+  const slides = [...document.querySelectorAll(".slide")];
+  let i = Math.max(0, Math.min(slides.length - 1, (parseInt(location.hash.slice(1)) || 1) - 1));
+  const show = (k) => {
+    i = Math.max(0, Math.min(slides.length - 1, k));
+    slides.forEach((s, j) => s.classList.toggle("on", j === i));
+    history.replaceState(null, "", "#" + (i + 1));
+  };
+  document.getElementById("prev").onclick = () => show(i - 1);
+  document.getElementById("next").onclick = () => show(i + 1);
+  document.addEventListener("keydown", (e) => {
+    if (["ArrowRight", "PageDown", " "].includes(e.key)) { show(i + 1); e.preventDefault(); }
+    if (["ArrowLeft", "PageUp"].includes(e.key)) { show(i - 1); e.preventDefault(); }
+  });
+  document.getElementById("deck").addEventListener("click", (e) => { if (!e.target.closest("a")) show(i + 1); });
+  show(i);
+</script>
+</body>
+</html>

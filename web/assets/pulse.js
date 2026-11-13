@@ -39,6 +39,14 @@ export class Pulse {
 
   setData(series, rain) { this.series = series; this.rain = rain; this.draw(); }
 
+  setDates(dates, gap) {
+    this.dates = dates;
+    this.times = dates.map((d) => Date.parse(d.date + "T00:00:00Z"));
+    this.gap = (gap || []).map((g) => Date.parse(g));
+    this.index = 0;
+    this.compareIndex = null;
+  }
+
   setIndex(i, compareIndex = null) { this.index = i; this.compareIndex = compareIndex; this.draw(); }
 
   select(i) {

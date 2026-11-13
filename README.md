@@ -2,16 +2,22 @@
 
 **Reading Earth's signals. Revealing its changes.**
 
-TerraPulse turns a year of NISAR L-band radar into a living map of how the lower Indus in Sindh, Pakistan, changes through the seasons: floods arriving and draining, wetlands swelling and shrinking, crops growing and being harvested. It also lets anyone browse NISAR radar imagery anywhere on Earth.
+TerraPulse turns NISAR L-band radar into a living map of how land and water change through the seasons: floods arriving and draining, wetlands swelling and shrinking, crops growing and being harvested. It covers a full year of the lower Indus in Sindh, Pakistan, the Amazon flood pulse at Manaus, Brazil, and lets anyone browse NISAR imagery anywhere on Earth.
 
-Built by team **TERRAPULSE** (Sudais Khalid, Sunnia Aslam) for the 2026 NASA Space Apps Challenge, challenge *Dancing with the SARs*.
+Built by team **TERRAPULSE** (Sudais Khalid, Sunnia Aslam, Topi, Pakistan) for the 2026 NASA Space Apps Challenge, challenge *Dancing with the SARs*.
+
+![NISAR water map on 7 July 2026 next to the cloud-covered MODIS image of the same day](web/assets/shots/clouds.jpg)
+
+**Live app:** `web/index.html` (deployed to GitHub Pages) · **Slides:** `web/slides.html` · **Submission text:** [docs/SUBMISSION.md](docs/SUBMISSION.md)
 
 ## What you can do
 
-- **Story**: seven short chapters that walk through the year, with numbers computed from the data.
-- **Explore**: switch layers, scrub through 28 satellite passes, compare two dates with a swipe divider, and click any spot to see its radar history.
-- **Pulse strip**: open water and flooded vegetation for each pass against daily rainfall, for the whole area or for one place (Keenjhar Lake, Badin lagoons, Indus floodplain, farms, Hyderabad).
-- **NISAR worldwide**: NASA GIBS daily NISAR mosaics for any place and day since October 2025.
+- **Story**: short chapters for each site, with every number computed from the data when the page loads.
+- **Explore**: seven layers, 28 passes for the Indus and 10 for Manaus, a swipe divider to compare two passes or radar against the optical image of the same day (MODIS or HLS).
+- **Pulse strip**: open water and flooded vegetation for every pass against daily GPM IMERG rainfall, for the whole area or one place. Press play, or **Listen** to hear the year as sound.
+- **Tools**: click any spot for its radar history, drag a box to measure any area across all passes, download CSV, and see automatically detected notable changes.
+- **Anywhere on Earth**: NASA GIBS NISAR mosaics, plus the dates NISAR imaged any point (ASF Search API).
+- **Shareable links** that reproduce any view.
 
 ## Layers
 
@@ -26,9 +32,12 @@ Built by team **TERRAPULSE** (Sudais Khalid, Sunnia Aslam) for the 2026 NASA Spa
 
 ## Data
 
-- **NISAR L2 GCOV** (NASA/JPL-Caltech and ISRO), from the ASF DAAC. Track 164, frame 76, descending. 27 passes from one processing version (PROVISIONAL, CRID P05023), 21 Nov 2025 to 11 Oct 2026, plus the VALIDATED pass of 23 Oct 2026.
-- **NASA GIBS** layer `NISAR_L2_Geocoded_Polarimetric_Covariance` for the worldwide view.
-- **NASA POWER** daily precipitation for rainfall context.
+- **NISAR L2 GCOV** (NASA/JPL-Caltech and ISRO), from the ASF DAAC.
+  - Lower Indus: track 164, frame 76, descending. 27 passes from one processing version (PROVISIONAL, CRID P05023), 21 Nov 2025 to 11 Oct 2026, plus the VALIDATED pass of 23 Oct 2026.
+  - Amazon at Manaus: track 140, frame 90, descending. 10 passes, 23 Jun to 2 Nov 2026, one radar mode.
+- **GPM IMERG** Late Run daily V07 (GES DISC) for rainfall per zone; **NASA POWER** as a fallback.
+- **NASA GIBS**: NISAR worldwide mosaics, MODIS Terra true colour and Harmonized Landsat Sentinel-2 for the optical comparison.
+- **ASF Search API** for finding NISAR passes anywhere.
 - **Esri World Imagery** and reference labels as the basemap.
 
 ## Method in brief
@@ -56,21 +65,27 @@ Limits are listed in the app under *How it works*: wind-roughened water, wet soi
 python -m venv .venv
 .venv/bin/pip install -r requirements.txt        # Windows: .venv\Scripts\pip
 echo "EARTHDATA_TOKEN=<your token>" > .env         # from https://urs.earthdata.nasa.gov/profile
-python -m terrapulse search
-python -m terrapulse ingest --workers 8          # resumable; slow links: use Colab instead
-python -m terrapulse process                     # writes web/data/lower-indus
+python -m terrapulse search  --site lower-indus  # or amazon-manaus
+python -m terrapulse ingest  --site lower-indus --workers 8   # resumable; slow links: use Colab
+python -m terrapulse rain    --site all          # GPM IMERG (approve "NASA GESDISC DATA ARCHIVE" in Earthdata Login)
+python -m terrapulse process --site lower-indus  # writes web/data/lower-indus and web/data/sites.json
 python -m http.server -d web 8000                # open http://localhost:8000
 ```
 
-On a slow connection, run `notebooks/terrapulse_pipeline.ipynb` in Google Colab and download the two zips it produces.
+On a slow connection, run `notebooks/terrapulse_pipeline.ipynb` in Google Colab: it contains the whole pipeline, runs it at cloud speed and downloads one results zip. Rebuild the notebook after changing the package with `python tools/build_notebook.py`.
+
+Adding a site: add a `Site` to `terrapulse/config.py` with its NISAR track and frame, a few named zones, one permanent water body (`water_ref`) and one never-flooded area (`dry_ref`), then run the stages above.
+
+Deploying: push to GitHub and set *Settings > Pages > Source* to *GitHub Actions*; `.github/workflows/pages.yml` publishes `web/`.
 
 ## Repository
 
-```
-terrapulse/   Python pipeline (search, ingest, products, export, rain)
-notebooks/    Colab notebook that runs the whole pipeline
-web/          Static web app (MapLibre GL JS), deployable to GitHub Pages
-docs/         Plan and data notes
+```text
+terrapulse/   Python pipeline (search, ingest, products, export, rainfall)
+notebooks/    Self-contained Colab notebook that runs the pipeline
+tools/        Notebook builder
+web/          Static web app (MapLibre GL JS) and slide deck, deployed to GitHub Pages
+docs/         Plan, data notes, submission text, demo video script and subtitles
 ```
 
 ## Use of AI
