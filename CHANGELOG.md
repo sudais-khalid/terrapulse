@@ -2,6 +2,12 @@
 
 All notable changes to TerraPulse. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- GitHub Actions updated to their Node 24 releases (checkout 7, setup-python 7, setup-node 7, configure-pages 6, upload-pages-artifact 5, deploy-pages 5); Dependabot now groups updates into one pull request per ecosystem.
+
 ## [1.0.0] - 2026-11-13
 
 First public release, for the 2026 NASA Space Apps Challenge (*Dancing with the SARs*).
@@ -48,6 +54,7 @@ First public release, for the 2026 NASA Space Apps Challenge (*Dancing with the 
 - NISAR GCOV pipeline: ASF search, single-CRID product selection, streaming AOI ingest with parallel HTTP range requests, products, web export.
 - Self-contained Colab notebook and the first version of the web app.
 
+[Unreleased]: https://github.com/sudais-khalid/terrapulse/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/sudais-khalid/terrapulse/compare/v0.4.0...v1.0.0
 [0.4.0]: https://github.com/sudais-khalid/terrapulse/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/sudais-khalid/terrapulse/compare/v0.2.0...v0.3.0
