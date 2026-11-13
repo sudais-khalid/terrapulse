@@ -54,8 +54,11 @@ def ingest_granule(g: Granule, site: Site, token: str, out_dir: Path, grid: Grid
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / f"{g.date}.npz"
     if out.exists():
-        log(f"  {g.date}: cached")
-        return out
+        with np.load(out) as z:
+            if "masked" in z.files:
+                log(f"  {g.date}: cached")
+                return out
+        log(f"  {g.date}: cache predates the validity mask, rebuilding")
 
     t0 = time.time()
     h5, fobj = open_h5(g.url, token)
@@ -84,6 +87,16 @@ def ingest_granule(g: Granule, site: Site, token: str, out_dir: Path, grid: Grid
             d = grp[pol]
             meta[d.name] = (pol, filter_pipeline(d), d.chunks, d.dtype, d.shape)
             refs += chunk_index(d, (r0, r1), (c0, c1))
+
+        # Validity mask (NISAR GCOV): 0 = built from partially focused samples (swath gaps),
+        # 1..n = subswath number (valid), 255 = outside the acquisition.
+        mask_refs = []
+        if "mask" in grp and grp["mask"].chunks == grp[POLS[0]].chunks:
+            md = grp["mask"]
+            meta[md.name] = ("mask", filter_pipeline(md), md.chunks, md.dtype, md.shape)
+            mask_refs = chunk_index(md, (r0, r1), (c0, c1))
+        else:
+            log(f"  {g.date}: no usable mask layer, keeping all positive samples")
         log(f"  {g.date} {g.mode} {g.pol} {spacing:.0f} m: window rows {r0}-{r1} cols {c0}-{c1}, {len(refs)} chunks, index {time.time() - t0:.0f}s")
 
         # Verify our decoder against h5py on one chunk before trusting it.
@@ -107,6 +120,12 @@ def ingest_granule(g: Granule, site: Site, token: str, out_dir: Path, grid: Grid
         _, filters, cshape, dtype, _ = meta[ref.dataset]
         return decode_chunk(raw, ref, filters, cshape, dtype)
 
+    masks = {}
+    if mask_refs:
+        for ref, arr in fetch_chunks(signed, mask_refs, decode, workers=workers, log=lambda *_: None):
+            masks[(ref.row, ref.col)] = arr
+    n_masked = 0
+
     for ref, arr in fetch_chunks(signed, refs, decode, workers=workers, log=log):
         pol, _, cshape, _, shape = meta[ref.dataset]
         rr = min(ref.row + cshape[0], shape[0])
@@ -121,6 +140,13 @@ def ingest_granule(g: Granule, site: Site, token: str, out_dir: Path, grid: Grid
         a = a[rin][:, cin]
         trow, tcol = trow[rin], tcol[cin]
         valid = np.isfinite(a) & (a > 0)
+        mk = masks.get((ref.row, ref.col))
+        if mk is not None:
+            mk = mk[: rr - ref.row, : cc - ref.col][rin][:, cin]
+            good = (mk >= 1) & (mk != 255)
+            if pol == POLS[0]:
+                n_masked += int((valid & ~good).sum())
+            valid &= good
         if not valid.any():
             continue
         tr0, tc0 = trow.min(), tcol.min()
@@ -143,8 +169,10 @@ def ingest_granule(g: Granule, site: Site, token: str, out_dir: Path, grid: Grid
         hh_db = (10 * np.log10(result["HHHH"])).astype(np.float16)
         hv_db = (10 * np.log10(result["HVHV"])).astype(np.float16)
     np.savez_compressed(out, hh_db=hh_db, hv_db=hv_db,
-                        looks=(cnts["HHHH"].astype(np.float32) / full).astype(np.float16))
+                        looks=(cnts["HHHH"].astype(np.float32) / full).astype(np.float16),
+                        masked=np.array(bool(mask_refs)))
     (out_dir / f"{g.date}.json").write_text(json.dumps({**asdict(g), "spacing_m": spacing, "epsg": epsg,
+                                                       "mask_applied": bool(mask_refs), "masked_native_px": n_masked,
                                                        "seconds": round(time.time() - t0, 1)}, indent=1))
     log(f"  {g.date}: done in {time.time() - t0:.0f}s, valid {np.isfinite(result['HHHH']).mean() * 100:.0f}% of grid")
     return out

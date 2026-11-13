@@ -107,6 +107,45 @@ RHYTHM_CLASSES = [
 ]
 
 
+def _rhythm_name(c) -> int:
+    """Name a cluster centroid (in physical units) with simple radar rules."""
+    hhm, hvm, hhs, hvs, occ, hvr, ffq = c
+    if occ >= 0.6:
+        return 1  # permanent water
+    if occ >= 0.15:
+        return 2  # seasonal water and wetland
+    if ffq >= 0.12:
+        return 3  # flood-prone vegetation
+    if hhm > -4 and hhs < 2.0:
+        return 6  # built-up: bright and steady
+    if hvr >= 6 or hvs >= 2.0:
+        return 4  # active cropland: big HV swing
+    if hvm >= -16:
+        return 5  # woody vegetation: high, steady HV
+    if hvm < -24:
+        return 7  # bare soil and desert
+    return 8      # sparse vegetation and fallow
+
+
+def rhythm_classes(X: np.ndarray, ok: np.ndarray, H: int, W: int, log=print, k: int = 10):
+    """k-means on standardised yearly features, then rule-based names per cluster."""
+    mu, sd = X.mean(0), X.std(0) + 1e-6
+    rng = np.random.default_rng(3)
+    idx = rng.choice(len(X), size=min(60000, len(X)), replace=False)
+    cents, _ = kmeans((X[idx] - mu) / sd, k=k)
+    lab = np.empty(len(X), np.int16)
+    Z = (X - mu) / sd
+    for s in range(0, len(Z), 200000):  # nearest centroid, in blocks to limit memory
+        z = Z[s:s + 200000]
+        lab[s:s + 200000] = np.argmin(((z[:, None, :] - cents[None]) ** 2).sum(-1), axis=1)
+    cents_units = cents * sd + mu
+    cluster_to_class = np.array([_rhythm_name(c) for c in cents_units], np.uint8)
+    rhythm = np.zeros((H, W), np.uint8)
+    rhythm[ok] = cluster_to_class[lab]
+    log("  rhythm clusters -> classes: " + ", ".join(f"{i}:{c}" for i, c in enumerate(cluster_to_class)))
+    return cents_units, cluster_to_class, rhythm
+
+
 # --------------------------------------------------------------------------- main
 def compute(stack: Stack, site: Site, log=print) -> dict:
     T, H, W = stack.hh.shape
@@ -181,40 +220,11 @@ def compute(stack: Stack, site: Site, log=print) -> dict:
     feats = np.stack([hh_med, hv_med, hh_std, hv_std, occurrence, hv_range, flood_freq], -1)
     ok = enough & np.all(np.isfinite(feats), -1)
     X = feats[ok]
-    mu, sd = X.mean(0), X.std(0) + 1e-6
-    rng = np.random.default_rng(3)
-    idx = rng.choice(len(X), size=min(60000, len(X)), replace=False)
-    cents, _ = kmeans((X[idx] - mu) / sd, k=10)
-    # Assign every pixel to its nearest centroid, in blocks to limit memory.
-    lab = np.empty(len(X), np.int16)
-    Z = (X - mu) / sd
-    for s in range(0, len(Z), 200000):
-        z = Z[s:s + 200000]
-        lab[s:s + 200000] = np.argmin(((z[:, None, :] - cents[None]) ** 2).sum(-1), axis=1)
-    cents_units = cents * sd + mu
-
-    def name(c):
-        hhm, hvm, hhs, hvs, occ, hvr, ffq = c
-        if occ >= 0.6:
-            return 1
-        if occ >= 0.15:
-            return 2
-        if ffq >= 0.12:
-            return 3
-        if hhm > -4 and hhs < 2.0:
-            return 6
-        if hvr >= 6 or hvs >= 2.0:
-            return 4
-        if hvm >= -16:
-            return 5
-        if hvm < -24:
-            return 7
-        return 8
-
-    cluster_to_class = np.array([name(c) for c in cents_units], np.uint8)
-    rhythm = np.zeros((H, W), np.uint8)
-    rhythm[ok] = cluster_to_class[lab]
-    log("  rhythm clusters -> classes: " + ", ".join(f"{i}:{cluster_to_class[i]}" for i in range(len(cents))))
+    if len(X) >= 1000:
+        cents_units, cluster_to_class, rhythm = rhythm_classes(X, ok, H, W, log)
+    else:
+        log("  rhythm skipped: not enough passes per pixel")
+        cents_units, cluster_to_class, rhythm = np.zeros((0, 7)), np.zeros(0, np.uint8), np.zeros((H, W), np.uint8)
 
     # 6. Zone statistics per date.
     cell_km2 = (stack.grid.res / 1000) ** 2
@@ -247,7 +257,7 @@ def compute(stack: Stack, site: Site, log=print) -> dict:
             "water_hh_db": round(t_hh, 2), "water_hv_db": round(t_hv, 2),
             "flood_rule": "HH rise >= 3 dB above pixel median, HH rise exceeds HV rise by >= 2 dB, HH >= -6 dB, not built-up",
             "mode_bias": bias, "mode_bias_corrected": corrected, "reference_mode": ref_mode,
-            "kmeans_k": int(len(cents)), "rhythm_centroids": [[round(float(v), 3) for v in c] for c in cents_units],
+            "kmeans_k": int(len(cents_units)), "rhythm_centroids": [[round(float(v), 3) for v in c] for c in cents_units],
             "rhythm_cluster_class": cluster_to_class.tolist(),
         },
         "zones": zstats,
