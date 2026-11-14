@@ -34,7 +34,8 @@ Every field below matches the 2026 Project Page form, in order, and is filled in
 
 - [ ] Tick: *"I have read and understand the project submission requirements as contained in the NASA Space Apps Project Submission Guide, and I agree to the Participant Terms and Conditions and Privacy Policy."*
 - [ ] Tick: *"I confirm that the submitted project represents my team's original work and that all external resources including code, text and images (even if they are open source or freely available) used in the project are listed in the References field of the project submission form..."* Our References field lists every outside resource below.
-- [ ] Click **Submit for Judging** and check for the confirmation banner.
+- [ ] In **Use of Super Intelligence (SI)**, pick every option from the dropdown that applies to us: the ones for **code** and for **text** written with a large language model or chatbot (Claude). Do **not** pick image, video or audio generation. Paste our short answer below into the text box if there is one.
+- [ ] Click **Submit for Judging** and check for the confirmation banner. Your participant certificate then appears in your profile (download it as PDF, Letter size, from a laptop).
 - [ ] Optional (recommended by the guide for new websites): request a FortiGuard Web Filter Classification for the live app at https://www.fortiguard.com/faq/wfratingsubmit (category: Education or Web-based Application, Company Name: N/A), so judges on filtered networks can open it.
 
 ---
@@ -106,6 +107,20 @@ TerraPulse answers three questions for any NISAR study area: where is water now,
 - Teachers and the public get radar explained in plain words, pictures and sound.
 - The method scales: a new site is a short configuration entry and one Colab run, and the worldwide view works for any place NISAR images.
 - Researchers and other apps can build on the outputs directly through the STAC catalog, without contacting us or reading our code.
+
+**What makes it creative**
+
+- The year is told as a dance: every place gets a "rhythm" (the still pool, the tide, the harvest waltz) found by clustering its radar signal and named by physical rules.
+- *Listen* turns the year into music, so the flood season can be heard as well as seen.
+- Radar and the optical image of the same day sit side by side behind a swipe divider, so anyone can see what the clouds hid.
+- Story numbers are computed live from the data, and passes spoiled by wind or heavy rain are flagged automatically instead of being reported as change.
+- The outputs are published as an open STAC catalog, so the maps are reusable data, not just pictures.
+
+**Energy, accessibility and cost**
+
+- *Energy:* instead of downloading whole 6 GB radar files, the pipeline fetches only the compressed pieces covering the study area, and the app is a static website with no server running. Each pass becomes 0.7 to 2 MB of map layers for the browser.
+- *Accessibility:* plain-language stories, a typeface designed for low-vision readers (Atkinson Hyperlegible), keyboard control of the time strip and the compare divider, screen-reader labels, sound as a second way to read the data, and a layout that works on phones. No login is needed.
+- *Cost:* everything is free to use and run: NASA open data, open-source libraries, Google Colab for processing and GitHub Pages for hosting. Adding a new site costs nothing but a short configuration and one Colab run.
 
 **What we hope to achieve**
 
