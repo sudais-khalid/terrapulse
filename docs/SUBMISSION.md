@@ -170,6 +170,24 @@ The form asks for one *Link Text* and one full *Link Url* per resource (click *A
 
 ## Space Agency Partner Data and Other References
 
+The form asks for one *Link Text* and one full *Link Url* per resource. Main resources (the last row links to the complete list below):
+
+| Link Text | Link Url |
+|---|---|
+| ISRO (Indian Space Research Organisation), NISAR partner agency | https://www.isro.gov.in/ |
+| Esri World Imagery basemap and reference labels | https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9 |
+| Sindh PDMA monsoon situation reports 2026 | https://pdma.gos.pk/ |
+| MapLibre GL JS (web map library) | https://maplibre.org/maplibre-gl-js/docs/ |
+| NumPy (numerical computing) | https://numpy.org/ |
+| h5py (reading NISAR HDF5 files) | https://www.h5py.org/ |
+| asf_search (ASF Python search library) | https://github.com/asfadmin/Discovery-asf_search |
+| STAC specification (open data catalog standard) | https://stacspec.org/ |
+| Google Colab (data processing) | https://colab.research.google.com/ |
+| GitHub Pages (hosting) | https://docs.github.com/en/pages |
+| Counterproof (mutation testing of our tests) | https://github.com/sudais-khalid/counterproof |
+| Claude by Anthropic (AI coding assistant) | https://claude.com/product/overview |
+| Full list of all libraries, fonts and tools used | https://github.com/sudais-khalid/terrapulse/blob/main/docs/SUBMISSION.md |
+
 **Space Agency Partner data**
 
 - **ISRO (Indian Space Research Organisation)**, a 2026 Space Agency Partner, is NISAR's partner agency; ISRO's contribution is part of every NISAR product we use. Our maps use the L-band GCOV products distributed by the ASF DAAC.
@@ -186,7 +204,7 @@ The form asks for one *Link Text* and one full *Link Url* per resource (click *A
 - STAC 1.1.0 specification and extensions (https://stacspec.org/); STAC Browser by Radiant Earth (linked for browsing the catalog).
 - Counterproof (mutation testing of our tests).
 - Google Colab (processing), GitHub, GitHub Actions and GitHub Pages (code, testing, hosting).
-- Fonts: Big Shoulders Display, Atkinson Hyperlegible and Martian Mono (Google Fonts, SIL Open Font License).
+- Fonts: Big Shoulders, Atkinson Hyperlegible and Martian Mono (Google Fonts, SIL Open Font License).
 - AI coding assistant: Claude (Anthropic).
 
 **Images**
