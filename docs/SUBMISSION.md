@@ -147,6 +147,27 @@ Yes. We used an AI coding assistant (Claude, by Anthropic) to help write code, d
 - **ASF Search API** and the **NISAR Data User Guide** (ASF): finding passes and product details.
 - **NASA POWER** daily precipitation: fallback rainfall where IMERG is not available.
 
+The form asks for one *Link Text* and one full *Link Url* per resource (click *Add* for each row):
+
+| Link Text | Link Url |
+|---|---|
+| NISAR L2 GCOV (Geocoded Polarimetric Covariance) radar data | https://nisar-docs.asf.alaska.edu/gcov/ |
+| NISAR mission (NASA-ISRO Synthetic Aperture Radar) | https://science.nasa.gov/mission/nisar/ |
+| NISAR Data User Guide (ASF DAAC) | https://nisar-docs.asf.alaska.edu/ |
+| ASF Data Search (NISAR data archive, ASF DAAC) | https://search.asf.alaska.edu/ |
+| ASF Search API (finding NISAR passes) | https://docs.asf.alaska.edu/api/basics/ |
+| NISAR on NASA Earthdata | https://www.earthdata.nasa.gov/data/platforms/space-based-platforms/nisar |
+| NISAR Cookbook (ASF OpenSARLab) | https://asfopensarlab.github.io/NISAR_Cookbook/ |
+| GPM IMERG daily precipitation (Late Run V07) | https://gpm.nasa.gov/data/imerg |
+| NASA GES DISC (IMERG data access) | https://disc.gsfc.nasa.gov/ |
+| NASA GIBS (NISAR worldwide mosaics, MODIS and HLS imagery) | https://nasa-gibs.github.io/gibs-api-docs/ |
+| MODIS Terra Corrected Reflectance | https://terra.nasa.gov/about/terra-instruments/modis |
+| Harmonized Landsat and Sentinel-2 (HLS) | https://www.earthdata.nasa.gov/data/projects/hls |
+| NASA POWER daily precipitation (fallback rainfall) | https://power.larc.nasa.gov/ |
+| NASA Earthdata Login (data access) | https://urs.earthdata.nasa.gov/ |
+| NASA Earthdata: What is Synthetic Aperture Radar | https://www.earthdata.nasa.gov/learn/earth-observation-data-basics/sar |
+| NISAR Societal Benefits (application white papers) | https://science.nasa.gov/mission/nisar/societal-benefits/ |
+
 ## Space Agency Partner Data and Other References
 
 **Space Agency Partner data**
@@ -175,9 +196,9 @@ Yes. We used an AI coding assistant (Claude, by Anthropic) to help write code, d
 **Documentation and literature**
 
 - NISAR Data User Guide, Alaska Satellite Facility: https://nisar-docs.asf.alaska.edu/ (Kristenson et al., 2026, doi:10.5281/ZENODO.20075813)
-- NISAR applications white papers (Floods, Food Security): https://nisar.jpl.nasa.gov/applications/societal-benefit/
+- NISAR applications white papers (Floods, Food Security): https://science.nasa.gov/mission/nisar/societal-benefits/
 - Earthdata, What is Synthetic Aperture Radar: https://www.earthdata.nasa.gov/learn/earth-observation-data-basics/sar
 - ASF OpenSARLab NISAR Cookbook: https://asfopensarlab.github.io/NISAR_Cookbook/
 - GPM IMERG: https://gpm.nasa.gov/data/imerg
-- NASA GIBS: https://www.earthdata.nasa.gov/engage/open-data-services-software/earthdata-developer-portal/gibs-api
+- NASA GIBS: https://nasa-gibs.github.io/gibs-api-docs/
 - Sindh PDMA situation reports, monsoon 2026: https://pdma.gos.pk/
