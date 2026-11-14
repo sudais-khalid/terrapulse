@@ -1,9 +1,10 @@
 1
-00:00:00,000 --> 00:00:02,000
-We are team TERRAPULSE, from Topi, Pakistan.
+00:00:00,000 --> 00:00:03,000
+We are Sudais and Sunnia,
+team TERRAPULSE, from Topi, Pakistan.
 
 2
-00:00:02,000 --> 00:00:05,000
+00:00:03,000 --> 00:00:05,000
 During the monsoon, clouds blind optical satellites.
 NISAR's radar sees straight through.
 
@@ -25,4 +26,5 @@ compare and download the change.
 
 6
 00:00:27,000 --> 00:00:30,000
-Open source, built on NASA NISAR data.
+Next: early flood alerts for Pakistan,
+and for any river NISAR sees.

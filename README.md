@@ -158,7 +158,7 @@ If you use TerraPulse or its outputs, please cite it using [CITATION.cff](CITATI
 
 ## Use of AI
 
-Code, documentation and copy in this project were drafted with the help of an AI coding assistant (Claude, by Anthropic) under the team's direction, then reviewed, tested and edited by the team. The scientific approach, study area, data choices and story are the team's own. No AI-generated images, video or audio are used.
+Code, documentation and copy in this project were drafted with the help of an AI coding assistant (Claude, by Anthropic) under the team's direction, then reviewed, tested and edited by the team. The idea, study areas, data choices, scientific approach and story are the team's own. No AI-generated images, video or audio are used: all images are screenshots of the app showing real NASA data, and the *Listen* sound is synthesised from the data in the browser.
 
 ## License
 

@@ -1,28 +1,65 @@
-# TerraPulse: Space Apps 2026 project page (draft to paste)
+# TerraPulse: Space Apps 2026 project submission (paste-ready)
 
 Challenge: **Dancing with the SARs** · Team: **TERRAPULSE** (Sudais Khalid, Sunnia Aslam) · Local event: Topi, Pakistan
 
-Add the demo video link below once it is uploaded. Check every field against the official 2026 Project Submission Guide.
+Every field below matches the 2026 Project Page form, in order, and is filled in. Copy each section into the field with the same name.
+
+## Before and during submission (checklist from the official 2026 guides)
+
+**Eligibility**
+
+- [ ] Both members are registered for the 2026 challenge, confirmed (not waitlisted) at the **same Local Event** (Topi), and appear on the **Members** tab of the team page. No members can be added after submission closes.
+- [ ] Each member's **Full Name** in their Space Apps profile is correct (it is printed on the participant certificate).
+
+**Timing (Local Event time, PKT)**
+
+- [ ] The **Project** tab appears on Saturday 14 November at 9:00 a.m. Submission closes on **Sunday 15 November at 11:59 p.m.** Anything saved or submitted after that is not judged.
+- [ ] Click **Edit**, turn the edit **Lock** on while one person edits, and click **Save Progress** often.
+- [ ] You can edit and resubmit as many times as you like until the deadline. Only the last saved submission is judged, so submit early and improve afterwards if needed.
+
+**Content rules**
+
+- [ ] Everything on the page and in linked materials is in English. A video may be in another language only with English subtitles.
+- [ ] Demo: a slide deck of at most **7 slides** (including title and intro), or a video of at most **30 seconds**. Over the limit means not eligible for Global Judging. Our deck has exactly 7 slides.
+- [ ] No images, video or audio of anyone under 18. None are used.
+- [ ] No NASA logos, flags or mission identifiers in generated content. None are used.
+- [ ] All links open without a login. Test each one in a private browser window before submitting.
+- [ ] Images: the page accepts JPG, PNG or GIF uploads up to 10 MB, but not videos or documents. Suggested uploads for the Detailed Project Description, all under 0.4 MB, from `web/assets/shots/`:
+  - `clouds.jpg`: NISAR water map next to the cloud-covered MODIS image, 7 July 2026
+  - `rice.jpg`: rice standing in water on the lower Indus, September 2026
+  - `manaus.jpg`: open water at Manaus, 5 July and 2 November 2026
+  - `area.jpg`: measuring an area across all passes
+
+**Submitting**
+
+- [ ] Tick: *"I have read and understand the project submission requirements as contained in the NASA Space Apps Project Submission Guide, and I agree to the Participant Terms and Conditions and Privacy Policy."*
+- [ ] Tick: *"I confirm that the submitted project represents my team's original work and that all external resources including code, text and images (even if they are open source or freely available) used in the project are listed in the References field of the project submission form..."* Our References field lists every outside resource below.
+- [ ] Click **Submit for Judging** and check for the confirmation banner.
+- [ ] Optional (recommended by the guide for new websites): request a FortiGuard Web Filter Classification for the live app at https://www.fortiguard.com/faq/wfratingsubmit (category: Education or Web-based Application, Company Name: N/A), so judges on filtered networks can open it.
 
 ---
 
-## Project name
+## Project Name
 
 TerraPulse: Reading Earth's signals. Revealing its changes.
 
-## High-level project summary
+## High-Level Project Summary
 
 TerraPulse is an open-source web app that turns NASA-ISRO NISAR L-band radar into a living map of how land and water change. For the lower Indus in Sindh, Pakistan, it streams a full year of NISAR GCOV data (28 passes) and maps open water, water hidden under crops and reeds, and the yearly rhythm of every 100 m of land. Water mapping is calibrated against a permanent lake and dry desert, corrected for radar mode, and checked against an independent lake. The app shows that NISAR saw the rice season unfold through monsoon clouds that blinded optical satellites: fields flooded in July, rice standing in water peaked at about 1,200 km² in September, then the harvest. A second site at Manaus shows the Amazon flood pulse, and any place on Earth can be explored through NASA's NISAR mosaics. Anyone can compare dates, measure an area, download data, or listen to the year as sound.
 
-## Link to project demo
+## Link to Project Demo
 
-`<link to the 30-second video>` (slides: https://sudais-khalid.github.io/terrapulse/slides.html)
+https://sudais-khalid.github.io/terrapulse/slides.html
 
-## Link to final project
+(Our 7-slide demo deck: title, problem, NASA data, science, results, the app, impact. If we record the 30-second video from `docs/DEMO_VIDEO.md`, upload it to YouTube as *Unlisted* with the English subtitles from `docs/demo_subtitles.srt` and put that link here instead.)
 
-https://sudais-khalid.github.io/terrapulse/ (live app) and https://github.com/sudais-khalid/terrapulse (code, notebook, data pipeline)
+## Link to Final Project
 
-## Detailed project description
+https://sudais-khalid.github.io/terrapulse/
+
+(Live web app. Source code, Colab notebook and data pipeline: https://github.com/sudais-khalid/terrapulse . Open data catalog: https://sudais-khalid.github.io/terrapulse/data/catalog.json)
+
+## Detailed Project Description
 
 **What it does**
 
@@ -70,6 +107,10 @@ TerraPulse answers three questions for any NISAR study area: where is water now,
 - The method scales: a new site is a short configuration entry and one Colab run, and the worldwide view works for any place NISAR images.
 - Researchers and other apps can build on the outputs directly through the STAC catalog, without contacting us or reading our code.
 
+**What we hope to achieve**
+
+We want anyone responsible for land and water, starting with Sindh, to be able to open a link and see what the radar saw, even when clouds hide everything else. Next steps: automatic alerts when a new NISAR pass shows unusual water, more sites across Pakistan's flood-prone districts, and validation against field reports and optical imagery on clear days. Because the outputs are open (STAC) and the code is open source, other teams can adapt TerraPulse to their own rivers.
+
 **Limits we state openly**
 
 Wind-roughened water is undercounted (flagged); smooth dry desert can pass the water test (12 to 17% of desert pixels in our check area); a sharp HH rise can mean wet soil rather than standing water; radio interference can create bright spots; NISAR had a permanent data gap from 27 July to 10 August 2026; PROVISIONAL products are calibrated but still under validation.
@@ -78,7 +119,11 @@ Wind-roughened water is undercounted (flagged); smooth dry desert can pass the w
 
 Python (NumPy, h5py, fsspec, aiohttp, SciPy, Pillow, asf_search), Google Colab for processing, JavaScript with MapLibre GL JS for the web app, Web Audio API for sound, GitHub Pages and GitHub Actions for hosting and continuous integration, pytest and ruff for testing and linting, STAC 1.1.0 (validated with pystac) for open data. Projection math (UTM, Web Mercator) and k-means are implemented in NumPy so the pipeline runs on restricted machines. No special hardware.
 
-## NASA data
+## Use of Super Intelligence (SI)
+
+Yes. We used an AI coding assistant (Claude, by Anthropic) to help write code, documentation and text under our direction; we reviewed and tested everything. The idea, study sites, data and scientific method are our own. No AI-generated images, video or audio are used, and no NASA branding. This is noted in the project README.
+
+## NASA Data
 
 - **NISAR L2 GCOV** (Geocoded Polarimetric Covariance), NASA/JPL-Caltech and ISRO, from the ASF DAAC: 28 passes over the lower Indus (track 164, frame 76) and 10 passes over Manaus (track 140, frame 90). Core of every map and number.
 - **NASA GIBS** layer `NISAR_L2_Geocoded_Polarimetric_Covariance`: NISAR worldwide view.
@@ -87,19 +132,32 @@ Python (NumPy, h5py, fsspec, aiohttp, SciPy, Pillow, asf_search), Google Colab f
 - **ASF Search API** and the **NISAR Data User Guide** (ASF): finding passes and product details.
 - **NASA POWER** daily precipitation: fallback rainfall where IMERG is not available.
 
-## Space agency partner and other data
+## Space Agency Partner Data and Other References
 
-- **ISRO** is NISAR's partner agency; its contribution is part of every NISAR product used.
-- Esri World Imagery and World Boundaries and Places reference labels as the basemap.
-- Sindh PDMA situation reports (July and August 2026) and news reports, cited in the app as context for the monsoon rain.
-- Fonts: Big Shoulders Display, Atkinson Hyperlegible, Martian Mono (Google Fonts, Open Font License).
-- Libraries: MapLibre GL JS (BSD-3), NumPy, SciPy, h5py, fsspec, aiohttp, Pillow, asf_search.
+**Space Agency Partner data**
 
-## Use of Artificial Intelligence
+- **ISRO (Indian Space Research Organisation)**, a 2026 Space Agency Partner, is NISAR's partner agency; ISRO's contribution is part of every NISAR product we use. Our maps use the L-band GCOV products distributed by the ASF DAAC.
 
-We used an AI coding assistant (Claude, by Anthropic) to help draft code, documentation and app text, under our direction. We chose the challenge, study areas, data and scientific approach, reviewed and tested the outputs, and checked every result against the data (for example, we replaced an automatic threshold after it counted desert as water). The AI-assisted code is in the repository and acknowledged in the README. No AI-generated images, video or audio are used; all images are screenshots of the app showing real NASA data.
+**Other data**
 
-## References
+- Esri World Imagery basemap (Esri, Maxar, Earthstar Geographics) and Esri World Boundaries and Places reference labels, shown with attribution in the app.
+- Sindh PDMA situation reports, July and August 2026 (https://pdma.gos.pk/), cited in the app as context for the monsoon rain.
+
+**Software, code and services** (open source or free to use, used as declared dependencies or services)
+
+- Python libraries: NumPy, SciPy, h5py, Pillow, fsspec, aiohttp, requests, asf_search (Alaska Satellite Facility). Development: pytest, ruff, pystac and jsonschema (STAC validation).
+- Web: MapLibre GL JS 4.7.1 (BSD-3-Clause, loaded from unpkg), Web Audio API.
+- STAC 1.1.0 specification and extensions (https://stacspec.org/); STAC Browser by Radiant Earth (linked for browsing the catalog).
+- Counterproof (mutation testing of our tests).
+- Google Colab (processing), GitHub, GitHub Actions and GitHub Pages (code, testing, hosting).
+- Fonts: Big Shoulders Display, Atkinson Hyperlegible and Martian Mono (Google Fonts, SIL Open Font License).
+- AI coding assistant: Claude (Anthropic).
+
+**Images**
+
+- All images are our own screenshots of the TerraPulse app. They show NISAR, MODIS and HLS data from NASA, and the Esri basemap with its attribution.
+
+**Documentation and literature**
 
 - NISAR Data User Guide, Alaska Satellite Facility: https://nisar-docs.asf.alaska.edu/ (Kristenson et al., 2026, doi:10.5281/ZENODO.20075813)
 - NISAR applications white papers (Floods, Food Security): https://nisar.jpl.nasa.gov/applications/societal-benefit/
