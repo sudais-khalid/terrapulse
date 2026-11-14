@@ -223,7 +223,7 @@
  "params": {
   "water_hh_db": -14.0,
   "water_hv_db": -20.0,
-  "water_calibration": "Rio Negro at Manaus (water) vs Terra firme forest, Reserva Ducke (check area) (dry land)",
+  "water_calibration": "Rio Negro at Manaus (water) vs Reserva Ducke forest (dry land)",
   "water_thresholds_by_mode": {
    "4005": {
     "hh_db": -14.0,
@@ -1031,7 +1031,7 @@
    ]
   },
   "ducke-forest": {
-   "name": "Terra firme forest, Reserva Ducke (check area)",
+   "name": "Reserva Ducke forest",
    "kind": "forest",
    "area_km2": 58.7,
    "series": [
@@ -1186,7 +1186,7 @@
    "note": "City of about two million people."
   },
   "ducke-forest": {
-   "name": "Terra firme forest, Reserva Ducke (check area)",
+   "name": "Reserva Ducke forest",
    "bbox": [
     -59.98,
     -2.98,

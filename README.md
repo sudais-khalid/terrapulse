@@ -61,7 +61,7 @@ Built by team **TERRAPULSE** (Sudais Khalid, Sunnia Aslam, Topi, Pakistan) for t
 ## Method in brief
 
 1. Search ASF for GCOV over the site and keep one product per date from a single CRID, so changes are not artefacts of software updates.
-2. Stream only the study area out of each 6 GB HDF5 file: read the chunk index once, fetch the compressed chunks with parallel HTTP range requests, decode deflate and shuffle, and check the decoder against h5py.
+2. Stream only the study area out of each 6 to 9 GB HDF5 file: read the chunk index once, fetch the compressed chunks with parallel HTTP range requests, decode deflate and shuffle, and check the decoder against h5py.
 3. Drop samples the NISAR mask flags as invalid (swath gaps), average 10 m and 20 m pixels onto one 100 m UTM grid (also reduces speckle), and check for brightness bias between radar modes on stable targets.
 4. Classify open water with HH and HV thresholds chosen per radar mode to best separate Keenjhar Lake (water) from the Jhimpir desert (dry land), plus newly flooded ground that turns 3 dB darker than its own median; flag passes where wind roughened the lake, or where GPM IMERG shows at least 15 mm of rain in the three days before (wet canopies mimic flooding). Classify likely flooded vegetation (HH at least 3 dB above the pixel's own median and rising more than HV), and compute frequency, change and clustering products.
 5. Reproject to Web Mercator and write small 8-bit PNG layers and a manifest that the web app decodes and colours in the browser.

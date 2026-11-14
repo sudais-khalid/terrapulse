@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>TerraPulse</title>
   <meta name="description" content="TerraPulse turns NASA-ISRO NISAR L-band radar into a living map of floods, wetlands and crops in Sindh, Pakistan and the Amazon at Manaus, and lets you explore NISAR imagery anywhere on Earth.">
   <meta property="og:type" content="website">
@@ -15,7 +15,7 @@
   <meta property="og:image:height" content="640">
   <meta property="og:image:alt" content="TerraPulse: NISAR radar water map next to a cloud-covered optical image of the same day">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="theme-color" content="#0e1530">
+  <meta name="theme-color" content="#0b1128">
   <link rel="canonical" href="https://sudais-khalid.github.io/terrapulse/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,54 +25,118 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230e1530'/%3E%3Cpath d='M3 18h6l3-9 4 15 3-10 2 4h8' fill='none' stroke='%23d0563f' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E">
 </head>
 <body>
+  <!-- Icon set: line icons in the style of Lucide (ISC licence), plus our own NISAR satellite drawing. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="g-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6dd8a"/><stop offset=".55" stop-color="#d8a640"/><stop offset="1" stop-color="#9c6f1f"/></linearGradient>
+      <linearGradient id="g-panel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3d5fae"/><stop offset="1" stop-color="#1a2d63"/></linearGradient>
+      <linearGradient id="g-beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a9df8" stop-opacity=".55"/><stop offset="1" stop-color="#4a9df8" stop-opacity="0"/></linearGradient>
+    </defs>
+    <symbol id="i-play" viewBox="0 0 24 24"><polygon points="7 4 20 12 7 20 7 4" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="M14.11 5.55a2 2 0 0 0 1.78 0l3.66-1.83A1 1 0 0 1 21 4.62v12.76a1 1 0 0 1-.55.9l-4.56 2.27a2 2 0 0 1-1.78 0l-4.22-2.1a2 2 0 0 0-1.78 0l-3.66 1.83A1 1 0 0 1 3 19.38V6.62a1 1 0 0 1 .55-.9l4.56-2.27a2 2 0 0 1 1.78 0z"/><path d="M15 5.76v15"/><path d="M9 3.24v15"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 15 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></symbol>
+    <symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1" stroke-dasharray="2 2"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
+    <symbol id="i-satellite" viewBox="0 0 24 24"><path d="M13 7 9 3 5 7l4 4"/><path d="m17 11 4 4-4 4-4-4"/><path d="m8 12 4 4 6-6-4-4z"/><path d="m16 8 3-3"/><path d="M9 21a6 6 0 0 0-6-6"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+    <symbol id="i-columns" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M2 14h4"/><path d="M10 8h4"/><path d="M18 16h4"/></symbol>
+    <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+    <symbol id="i-legend" viewBox="0 0 24 24"><rect x="3" y="4" width="4" height="4" rx="1"/><rect x="3" y="10" width="4" height="4" rx="1"/><rect x="3" y="16" width="4" height="4" rx="1"/><path d="M11 6h10"/><path d="M11 12h10"/><path d="M11 18h10"/></symbol>
+
+    <!-- NISAR: 12 m gold wire-mesh reflector on a 9 m boom, octagonal instrument structure, ISRO bus with solar array. -->
+    <symbol id="nisar" viewBox="0 0 120 80">
+      <g transform="rotate(-24 34 26)">
+        <ellipse cx="34" cy="26" rx="25" ry="9.5" fill="url(#g-gold)"/>
+        <ellipse cx="34" cy="26" rx="25" ry="9.5" fill="none" stroke="#7a5418" stroke-width=".8"/>
+        <g stroke="#8a6220" stroke-width=".55" opacity=".75" fill="none">
+          <path d="M9 26h50"/><path d="M34 16.5v19"/><path d="M16 19.5 52 32.5"/><path d="M16 32.5 52 19.5"/>
+          <ellipse cx="34" cy="26" rx="16" ry="6"/><ellipse cx="34" cy="26" rx="8" ry="3"/>
+        </g>
+      </g>
+      <path d="M44 33 78 47" stroke="#c9ccd8" stroke-width="2" stroke-linecap="round"/>
+      <path d="M44 33 78 47" stroke="#8d91a3" stroke-width=".7" stroke-dasharray="2 2.4"/>
+      <g transform="translate(70 40)">
+        <path d="M5 0h8l5 5v8l-5 5H5l-5-5V5z" fill="url(#g-gold)" stroke="#7a5418" stroke-width=".8"/>
+        <path d="M3.5 6.5h11M3.5 11.5h11" stroke="#9c6f1f" stroke-width=".6"/>
+        <rect x="18" y="5.5" width="4" height="7" fill="#c9ccd8"/>
+      </g>
+      <g transform="translate(91 39)">
+        <path d="M0 4h4v9H0z" fill="#8d91a3"/>
+        <rect x="4" y="0" width="26" height="17" rx="1" fill="url(#g-panel)" stroke="#6c86c9" stroke-width=".7"/>
+        <path d="M10.5 0v17M17 0v17M23.5 0v17M4 8.5h26" stroke="#6c86c9" stroke-width=".55"/>
+      </g>
+    </symbol>
+  </svg>
+
+  <a class="skip" href="#panel">Skip to the panel</a>
+
   <header class="topbar">
     <div class="brand">
-      <span class="wordmark">TerraPulse</span>
-      <span class="tagline">Reading Earth's signals. Revealing its changes.</span>
+      <svg class="brand-mark" viewBox="0 0 120 80" role="img" aria-label="NISAR satellite"><path class="beam" d="M30 40 10 80h42z" fill="url(#g-beam)"/><use href="#nisar"/></svg>
+      <div class="brand-text">
+        <span class="wordmark">TerraPulse</span>
+        <span class="tagline">Reading Earth's signals. Revealing its changes.</span>
+      </div>
     </div>
+    <nav class="modes" aria-label="Mode">
+      <button class="mode" data-mode="story" aria-pressed="true"><svg class="i"><use href="#i-book"/></svg><span>Story</span></button>
+      <button class="mode" data-mode="explore" aria-pressed="false"><svg class="i"><use href="#i-map"/></svg><span>Explore</span></button>
+      <button class="mode" data-mode="learn" aria-pressed="false"><svg class="i"><use href="#i-info"/></svg><span class="full">How it works</span><span class="short">About</span></button>
+    </nav>
     <div class="top-right">
-      <label class="site-pick"><span class="sr-only">Study site</span><select id="site-select" aria-label="Study site"></select></label>
-      <nav class="modes" aria-label="Mode">
-        <button class="mode" data-mode="story" aria-pressed="true">Story</button>
-        <button class="mode" data-mode="explore" aria-pressed="false">Explore</button>
-        <button class="mode" data-mode="learn" aria-pressed="false"><span class="full">How it works</span><span class="short">About</span></button>
-      </nav>
-      <button class="icon-btn share" id="share" title="Copy a link to this view" aria-label="Copy a link to this view">
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      </button>
+      <label class="site-pick"><svg class="i"><use href="#i-pin"/></svg><span class="sr-only">Study site</span><select id="site-select" aria-label="Study site"></select></label>
+      <button class="icon-btn round" id="help" title="Quick tour" aria-label="Open the quick tour"><svg class="i"><use href="#i-help"/></svg></button>
+      <button class="icon-btn round share" id="share" title="Copy a link to this view" aria-label="Copy a link to this view"><svg class="i"><use href="#i-link"/></svg></button>
     </div>
   </header>
 
   <main class="stage">
     <div id="map" class="map" aria-label="Map"></div>
     <div id="map-b" class="map map-b" aria-hidden="true"></div>
+    <div class="scan" id="scan" aria-hidden="true"><div class="scan-swath"><svg class="scan-sat" viewBox="0 0 120 80"><use href="#nisar"/></svg></div></div>
     <div id="swipe" class="swipe" hidden>
       <div class="swipe-handle" role="slider" title="Drag to compare" tabindex="0" aria-label="Compare divider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"></div>
       <span class="swipe-tag swipe-tag-a" id="swipe-tag-a"></span>
       <span class="swipe-tag swipe-tag-b" id="swipe-tag-b"></span>
     </div>
 
-    <aside class="panel" id="panel">
+    <aside class="panel" id="panel" tabindex="-1">
+      <button class="sheet-toggle" id="sheet-toggle" aria-expanded="true" aria-controls="panel" aria-label="Collapse or expand the panel"><span class="grip"></span><svg class="i"><use href="#i-up"/></svg></button>
       <!-- Story -->
       <section class="pane" data-pane="story">
-        <div class="story-progress" id="story-progress"></div>
+        <div class="story-head">
+          <div class="story-progress" id="story-progress"></div>
+          <span class="ch-count" id="ch-count"></span>
+        </div>
         <article class="chapter" id="chapter" aria-live="polite"></article>
         <div class="chapter-nav">
-          <button id="prev-ch" class="btn ghost">Back</button>
-          <button id="next-ch" class="btn">Next</button>
+          <button id="prev-ch" class="btn ghost"><svg class="i"><use href="#i-left"/></svg><span>Back</span></button>
+          <button id="next-ch" class="btn"><span class="lbl">Next</span><svg class="i"><use href="#i-right"/></svg></button>
         </div>
       </section>
 
       <!-- Explore -->
       <section class="pane" data-pane="explore" hidden>
-        <h2 class="pane-title">Layers</h2>
+        <h2 class="pane-title"><svg class="i"><use href="#i-layers"/></svg>Layers</h2>
         <fieldset class="layers" id="layer-list">
           <legend class="sr-only">Map layer</legend>
         </fieldset>
         <div id="layer-legend" class="legend"></div>
 
-        <div class="control-block" id="compare-block">
-          <label class="switch"><input type="checkbox" id="compare-toggle"> <span>Compare side by side</span></label>
+        <div class="card control-block" id="compare-block">
+          <label class="switch"><input type="checkbox" id="compare-toggle"><span class="track" aria-hidden="true"></span><svg class="i"><use href="#i-columns"/></svg><span>Compare side by side</span></label>
           <div id="compare-opts" hidden>
             <div class="seg" role="radiogroup" aria-label="Compare with">
               <label><input type="radio" name="cmpwith" value="date" checked> Another pass</label>
@@ -95,34 +159,34 @@
           </div>
         </div>
 
-        <div class="control-block" id="threshold-block" hidden>
-          <label for="thr">Water threshold, HH <output id="thr-out"></output></label>
+        <div class="card control-block" id="threshold-block" hidden>
+          <label for="thr"><svg class="i"><use href="#i-sliders"/></svg>Water threshold, HH <output id="thr-out"></output></label>
           <input type="range" id="thr" min="-26" max="-10" step="0.5">
           <p class="hint">Pixels darker than this in HH count as open water. Drag to see how sensitive the map is to the choice.</p>
         </div>
 
-        <div class="control-block">
+        <div class="card control-block">
           <label for="opacity">Layer opacity</label>
           <input type="range" id="opacity" min="0" max="1" step="0.05" value="0.9">
         </div>
 
-        <h2 class="pane-title">Tools</h2>
+        <h2 class="pane-title"><svg class="i"><use href="#i-scan"/></svg>Tools</h2>
         <div class="tool-row">
-          <button class="btn ghost" id="measure">Measure an area</button>
-          <button class="btn ghost" id="csv-zone">Download data (CSV)</button>
+          <button class="btn ghost" id="measure"><svg class="i"><use href="#i-scan"/></svg><span class="lbl">Measure an area</span></button>
+          <button class="btn ghost" id="csv-zone"><svg class="i"><use href="#i-download"/></svg><span>Download data (CSV)</span></button>
         </div>
-        <p class="hint">Measure: drag a box on the map to get its open water and flooded vegetation for every pass. Click any spot for its radar history.</p>
+        <p class="hint">Measure: drag a box on the map to get its open water and flooded vegetation for every pass. Tap or click any spot for its radar history.</p>
 
-        <h2 class="pane-title">Notable changes</h2>
+        <h2 class="pane-title"><svg class="i"><use href="#i-activity"/></svg>Notable changes</h2>
         <div class="events" id="events"></div>
 
-        <h2 class="pane-title">Places</h2>
+        <h2 class="pane-title"><svg class="i"><use href="#i-pin"/></svg>Places</h2>
         <div class="places" id="places"></div>
 
-        <h2 class="pane-title">Anywhere on Earth</h2>
+        <h2 class="pane-title"><svg class="i"><use href="#i-globe"/></svg>Anywhere on Earth</h2>
         <p class="hint">Switch to <em>NISAR worldwide</em>, fly anywhere, then find the days NISAR imaged the map centre. NASA GIBS serves NISAR radar mosaics for every day since October 2025.</p>
         <div class="places" id="world-places"></div>
-        <div class="tool-row"><button class="btn ghost" id="find-passes">Find NISAR passes at map centre</button></div>
+        <div class="tool-row"><button class="btn ghost" id="find-passes"><svg class="i"><use href="#i-satellite"/></svg><span>Find NISAR passes at map centre</span></button></div>
         <div class="places" id="pass-list"></div>
       </section>
 
@@ -135,33 +199,64 @@
     <aside class="inspector" id="inspector" hidden>
       <header>
         <h2 id="insp-title">Pixel history</h2>
-        <button class="icon-btn" id="close-inspector" aria-label="Close panel">&times;</button>
+        <button class="icon-btn round small" id="close-inspector" aria-label="Close panel"><svg class="i"><use href="#i-x"/></svg></button>
       </header>
       <p class="coords" id="insp-coords"></p>
       <svg id="insp-chart" class="insp-chart" role="img" aria-label="Values over time at the selected place"></svg>
       <p class="insp-read" id="insp-read"></p>
-      <button class="btn ghost small" id="insp-csv" hidden>Download CSV</button>
+      <button class="btn ghost small" id="insp-csv" hidden><svg class="i"><use href="#i-download"/></svg><span>Download CSV</span></button>
     </aside>
 
     <div class="date-chip" id="date-chip" aria-live="polite" hidden></div>
+    <div class="loader" id="loader" role="status" aria-live="polite" hidden>
+      <span class="scope" aria-hidden="true"><i></i></span><span class="loader-text" id="loader-text">Processing radar layer</span>
+    </div>
     <div class="status" id="status" role="status"></div>
   </main>
 
   <footer class="pulse" id="pulse">
     <div class="pulse-head">
-      <button class="play" id="play" aria-label="Play through the year" aria-pressed="false"><span class="play-icon"></span></button>
+      <button class="play round" id="play" aria-label="Play through the year" aria-pressed="false"><svg class="i ip"><use href="#i-play"/></svg><svg class="i ipa"><use href="#i-pause"/></svg></button>
       <button class="listen" id="listen" aria-pressed="false" title="Play the year as sound: pitch is open water, the second voice is flooded vegetation, the hiss is rain">
-        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zM16 8a5 5 0 0 1 0 8M18.5 5.5a8.5 8.5 0 0 1 0 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span>Listen</span>
+        <svg class="i"><use href="#i-volume"/></svg><span>Listen</span>
       </button>
       <div class="pulse-label">
         <span class="pulse-title" id="pulse-title">Open water, whole study area</span>
-        <span class="pulse-sub" id="pulse-sub"></span>
+        <div class="pulse-legend" id="pulse-sub"></div>
       </div>
+      <button class="icon-btn round small legend-btn" id="legend-btn" aria-expanded="false" aria-controls="pulse-sub" title="What the lines mean" aria-label="Show the chart legend"><svg class="i"><use href="#i-legend"/></svg></button>
       <select id="zone-select" class="zone-select" aria-label="Area shown in the pulse strip"></select>
     </div>
     <svg id="pulse-svg" class="pulse-svg" role="slider" tabindex="0" aria-label="Date"></svg>
   </footer>
+
+  <dialog class="welcome" id="welcome" aria-labelledby="welcome-title">
+    <div class="welcome-art" aria-hidden="true">
+      <svg class="orbit" viewBox="0 0 400 170" preserveAspectRatio="xMidYMax slice">
+        <defs><radialGradient id="g-earth" cx="50%" cy="0%" r="90%"><stop offset="0" stop-color="#2a4a7a"/><stop offset=".6" stop-color="#14254a"/><stop offset="1" stop-color="#0b1128"/></radialGradient></defs>
+        <circle cx="200" cy="560" r="440" fill="url(#g-earth)"/>
+        <circle cx="200" cy="560" r="440" fill="none" stroke="#4a9df8" stroke-opacity=".35"/>
+        <path class="swath-line" d="M40 150 Q200 104 360 150" fill="none" stroke="#4a9df8" stroke-width="10" stroke-opacity=".18"/>
+      </svg>
+      <svg class="welcome-sat" viewBox="0 0 120 80"><path class="beam" d="M30 40 6 80h48z" fill="url(#g-beam)"/><use href="#nisar"/></svg>
+      <span class="ping"></span>
+    </div>
+    <div class="welcome-body">
+      <p class="eyebrow">NASA-ISRO NISAR radar · Space Apps 2026</p>
+      <h2 id="welcome-title">See the land breathe, through any cloud</h2>
+      <p class="lede">Every 12 days the NISAR satellite maps Earth with its own microwaves, day or night, through cloud. TerraPulse turns a year of that radar into a map you can play.</p>
+      <ol class="steps">
+        <li><svg class="i"><use href="#i-book"/></svg><div><b>Story</b><span>Short chapters walk you through what the radar saw. Use Next and Back.</span></div></li>
+        <li><svg class="i"><use href="#i-map"/></svg><div><b>Explore</b><span>Switch layers, compare two dates, measure an area, download the data.</span></div></li>
+        <li><svg class="i"><use href="#i-activity"/></svg><div><b>The pulse strip</b><span>Tap any point in time at the bottom, or press play to watch the year.</span></div></li>
+      </ol>
+      <div class="welcome-actions">
+        <button class="btn" id="welcome-story"><svg class="i"><use href="#i-book"/></svg><span>Start the story</span></button>
+        <button class="btn ghost" id="welcome-explore"><svg class="i"><use href="#i-map"/></svg><span>Explore the map</span></button>
+      </div>
+    </div>
+    <button class="icon-btn round small welcome-close" id="welcome-close" aria-label="Close the tour"><svg class="i"><use href="#i-x"/></svg></button>
+  </dialog>
 
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <script type="module" src="assets/app.js"></script>

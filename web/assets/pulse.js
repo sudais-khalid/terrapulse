@@ -82,13 +82,18 @@ export class Pulse {
     el("rect", { width: 6, height: 6, fill: "#151d3b" }, pat);
     el("line", { x1: 0, y1: 0, x2: 0, y2: 6, stroke: "#2b3666", "stroke-width": 3 }, pat);
 
-    // Months
+    // Months: a grid line for every month, but labels thinned out so they never collide on narrow screens.
     const start = new Date(t0);
-    for (let m = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1)); m.getTime() < t1; m.setUTCMonth(m.getUTCMonth() + 1)) {
+    const perMonth = (W - pad.l - pad.r) / Math.max(1, (t1 - t0) / (30.44 * DAY));
+    const every = perMonth < 26 ? 3 : perMonth < 40 ? 2 : 1;
+    let k = 0;
+    for (let m = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1)); m.getTime() < t1; m.setUTCMonth(m.getUTCMonth() + 1), k++) {
       const xm = x(m.getTime());
       el("line", { x1: xm, x2: xm, y1: pad.t, y2: base, stroke: "#1c2650" }, svg);
+      if (k % every) continue;
       const lab = el("text", { x: xm + 3, y: H - 5, class: "axis" }, svg);
-      lab.textContent = m.toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" }) + (m.getUTCMonth() === 0 ? " " + m.getUTCFullYear() : "");
+      const year = m.getUTCMonth() === 0 && perMonth * every >= 58 ? " " + m.getUTCFullYear() : "";
+      lab.textContent = m.toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" }) + year;
     }
 
     // Instrument data gap

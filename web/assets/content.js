@@ -233,6 +233,17 @@ export function learnHTML(m) {
   return `
 <h2>How it works</h2>
 <p>TerraPulse reads radar from <b>NISAR</b>, the NASA and ISRO Synthetic Aperture Radar satellite launched in July 2025. It images nearly all land every 12 days, day or night, through clouds.</p>
+<div class="sat-card">
+  <svg viewBox="0 0 120 80" role="img" aria-label="Drawing of the NISAR satellite: a large gold mesh reflector on a boom, the instrument structure and a solar array"><path class="beam" d="M30 40 6 80h48z" fill="url(#g-beam)"/><use href="#nisar"/></svg>
+  <dl>
+    <dt>Launched</dt><dd>30 July 2025, a NASA and ISRO mission</dd>
+    <dt>Radars</dt><dd>L-band, 24 cm wavelength (NASA JPL) and S-band, 9.4 cm (ISRO)</dd>
+    <dt>Antenna</dt><dd>12 m gold-plated wire-mesh reflector on a 9 m boom</dd>
+    <dt>Coverage</dt><dd>242 km wide swath; all land and ice every 12 days</dd>
+    <dt>We use</dt><dd>L-band GCOV, HH and HV, ${m.dates.length} passes over ${m.site.name}</dd>
+  </dl>
+  <p class="src">Facts: NASA Science, About the NISAR Satellite. The drawing is illustrative.</p>
+</div>
 
 <h3>Radar in one minute</h3>
 <p>NISAR sends microwave pulses at the ground and records the echo. Two things shape the echo: how <b>rough or structured</b> the surface is, and how <b>wet</b> it is (water reflects microwaves strongly). Echo strength is reported in decibels (dB); lower is darker.</p>
@@ -249,7 +260,8 @@ export function learnHTML(m) {
 <h3>What we did with the data</h3>
 <ul>
   <li><b>Data:</b> NISAR Level-2 GCOV (radiometrically terrain corrected gamma-naught), track ${m.site.track}, frame ${m.site.frame}, from the ASF DAAC. The core series uses one processing version (PROVISIONAL, CRID P05023) so changes are not artefacts of software updates. ${nVal === 1 ? "The newest pass comes from the VALIDATED collection (CRID P05036) and is marked in the strip." : nVal > 1 ? `The newest ${nVal} passes come from the VALIDATED collection (CRID P05036) and are marked in the strip.` : ""}</li>
-  <li><b>Streaming:</b> only the study area is read from each 6 GB file, by fetching the compressed HDF5 chunks we need in parallel.</li>
+  <li><b>Streaming:</b> only the study area is read from each 6 to 9 GB file, by fetching the compressed HDF5 chunks we need in parallel. Each pass becomes about 1 to 2 MB of map layers for your browser.</li>${indus ? `
+  <li><b>Why 28 passes:</b> the ASF archive holds 33 products for this track and frame. Three are older BETA versions of 21 Nov, 15 Dec and 20 Jan, and two are duplicate reprocessings of 25 Jun and 5 Sep, so every date is used once, from a single processing version.</li>` : ""}
   <li><b>Quality mask:</b> samples NISAR flags as invalid (partially focused radar data in swath gaps) are dropped; ${modes.includes("2005") ? "on 20 MHz passes this removes about 16% of the area, " : ""}shown in grey.</li>
   <li><b>Grid:</b> 10 m and 20 m pixels are averaged to 100 m, which also suppresses speckle.</li>
   <li><b>Open water:</b> HH and HV both below thresholds that best separate ${z(m.site.water_ref)} (water) from ${z(m.site.dry_ref)} (dry land), ${modes.length > 1 ? "chosen separately for each radar mode because the 40 MHz mode reads dark surfaces about 1 dB brighter." : "for this site's single radar mode."} A pixel that turns at least 3 dB darker than its own median in both channels also counts as newly flooded.${indus ? " Haleji Lake, not used for calibration, stays at a steady size: an independent check." : ""}</li>
@@ -284,6 +296,7 @@ export function learnHTML(m) {
   <li>Optical imagery: MODIS Terra and Harmonized Landsat Sentinel-2 (HLS), NASA GIBS.</li>
   <li>NISAR pass search: ASF Search API.</li>
   <li>Basemap: Esri World Imagery and reference labels.</li>
+  <li>Interface icons: Lucide (ISC licence). The NISAR satellite drawing is our own, based on NASA's description.</li>
   <li>Built by team TERRAPULSE for the 2026 NASA Space Apps Challenge, challenge "Dancing with the SARs". Open source under Apache 2.0.</li>
 </ul>
 `;

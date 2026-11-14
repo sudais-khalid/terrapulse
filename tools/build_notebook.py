@@ -42,7 +42,7 @@ Steps:
 
 1. **Rainfall**: daily NASA GPM IMERG (Late Run, V07) averaged over every zone of both sites.
 2. **Search** the ASF archive and keep one product per date from a single processing version, plus the newest VALIDATED dates.
-3. **Ingest**: stream only the study area out of each 6 GB HDF5 file (parallel range requests of the compressed chunks), drop samples flagged invalid by the NISAR mask, and average onto a common 100 m grid.
+3. **Ingest**: stream only the study area out of each 6 to 9 GB HDF5 file (parallel range requests of the compressed chunks), drop samples flagged invalid by the NISAR mask, and average onto a common 100 m grid.
 4. **Process**: open water calibrated on a reference water body and dry land, flooded vegetation, water occurrence, change metrics, surface rhythm classes, zone statistics.
 5. **Download** one zip with the results.
 

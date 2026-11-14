@@ -10,7 +10,7 @@ There is no server, database or tile service. Everything is static files on GitH
 ```mermaid
 flowchart LR
   subgraph NASA["NASA and partner data"]
-    ASF["ASF DAAC<br/>NISAR L2 GCOV<br/>(HDF5, about 6 GB each)"]
+    ASF["ASF DAAC<br/>NISAR L2 GCOV<br/>(HDF5, 6 to 9 GB each)"]
     GES["GES DISC<br/>GPM IMERG daily"]
     GIBS["NASA GIBS<br/>NISAR mosaics, MODIS, HLS"]
   end

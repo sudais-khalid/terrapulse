@@ -4,6 +4,17 @@ All notable changes to TerraPulse. The format follows [Keep a Changelog](https:/
 
 ## [Unreleased]
 
+### Added
+
+- Premium interface: NISAR satellite mark in the header, a quick tour for first-time visitors (reopen with the help button), a radar swath sweep when a story chapter opens, a radar-scope loader instead of plain loading text, line icons throughout, a chapter counter, keyboard shortcuts (arrow keys for chapters, Escape closes panels) and a NISAR fact card in *How it works*.
+- Layouts for every screen: two-row header and a collapsible bottom sheet on phones, sticky Back and Next buttons, readable chart legend (inline on wide screens, a button elsewhere), month labels that never collide, safe-area support.
+
+### Fixed
+
+- The app no longer waits for basemap tiles before starting, so story text and layers appear even when the imagery server is slow.
+- File sizes stated as 6 to 9 GB (checked against the ASF archive) instead of 6 GB; the unsupported "35 s per file" figure is replaced by the measured 1 to 2 MB of map layers per pass.
+- Reference zones are labelled Jhimpir desert and Reserva Ducke forest instead of internal "check area" notes; *How it works* explains why the archive's 33 Indus products give 28 passes.
+
 ### Changed
 
 - Tests checked with Counterproof mutation testing: all 8 planted faults in the STAC code are now caught (was 1 of 4). Test suite grows from 46 to 57 tests: no silent skips (missing data now fails), full per-pass metadata checks, and a golden-file comparison of the rebuilt catalog.

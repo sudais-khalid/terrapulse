@@ -64,7 +64,7 @@ https://sudais-khalid.github.io/terrapulse/
 
 **What it does**
 
-TerraPulse answers three questions for any NISAR study area: where is water now, where is water hidden under vegetation, and how does each place change through the year.
+The ASF archive holds 33 NISAR products for our Indus track; 3 are older BETA versions and 2 are duplicate reprocessings of dates we already have, so we use 28 distinct passes, each from a single processing version. TerraPulse answers three questions for any NISAR study area: where is water now, where is water hidden under vegetation, and how does each place change through the year.
 
 - **Story mode** walks through the year in short chapters. Every number in the text is computed from the data when the page loads.
 - **Explore mode** offers seven layers: radar colour, water and flooded vegetation, change between any two passes, how often each place was under water, a "surface rhythm" classification, vegetation swing, and NISAR worldwide.
@@ -78,7 +78,7 @@ TerraPulse answers three questions for any NISAR study area: where is water now,
 **How it works**
 
 1. A Python pipeline (`terrapulse/`) searches the ASF DAAC archive and keeps one GCOV product per date from a single processing version (PROVISIONAL, CRID P05023), plus the newest VALIDATED passes, so changes are not software artefacts.
-2. Each GCOV file is about 6 GB. Instead of downloading it, TerraPulse reads the HDF5 chunk index and fetches only the compressed chunks covering the study area with parallel HTTP range requests, decodes them, and checks the decoder against h5py. One pass takes about 35 seconds in Google Colab.
+2. Each GCOV file is 6 to 9 GB. Instead of downloading it, TerraPulse reads the HDF5 chunk index and fetches only the compressed chunks covering the study area with parallel HTTP range requests, decodes them, and checks the decoder against h5py. Each pass becomes about 1 to 2 MB of map layers for the browser.
 3. Samples flagged invalid by the NISAR mask (swath gaps) are dropped, and 10 m and 20 m pixels are averaged onto a 100 m grid.
 4. Open water: HH and HV thresholds are chosen separately for each radar mode to best separate a permanent reference lake (Keenjhar Lake) from dry reference land (rocky desert near Jhimpir). The 40 MHz mode reads dark surfaces about 1 dB brighter, which this corrects. A pixel that turns at least 3 dB darker than its own median in both channels also counts as newly flooded.
 5. Flooded vegetation: L-band passes through crop and reed canopies and double-bounces off stems standing in water, so HH jumps at least 3 dB above that pixel's normal level and rises more than HV.
@@ -118,7 +118,7 @@ TerraPulse answers three questions for any NISAR study area: where is water now,
 
 **Energy, accessibility and cost**
 
-- *Energy:* instead of downloading whole 6 GB radar files, the pipeline fetches only the compressed pieces covering the study area, and the app is a static website with no server running. Each pass becomes 0.7 to 2 MB of map layers for the browser.
+- *Energy:* instead of downloading whole 6 to 9 GB radar files, the pipeline fetches only the compressed pieces covering the study area, and the app is a static website with no server running. Each pass becomes 0.7 to 2 MB of map layers for the browser.
 - *Accessibility:* plain-language stories, a typeface designed for low-vision readers (Atkinson Hyperlegible), keyboard control of the time strip and the compare divider, screen-reader labels, sound as a second way to read the data, and a layout that works on phones. No login is needed.
 - *Cost:* everything is free to use and run: NASA open data, open-source libraries, Google Colab for processing and GitHub Pages for hosting. Adding a new site costs nothing but a short configuration and one Colab run.
 
@@ -205,6 +205,7 @@ The form asks for one *Link Text* and one full *Link Url* per resource. Main res
 - Counterproof (mutation testing of our tests).
 - Google Colab (processing), GitHub, GitHub Actions and GitHub Pages (code, testing, hosting).
 - Fonts: Big Shoulders, Atkinson Hyperlegible and Martian Mono (Google Fonts, SIL Open Font License).
+- Interface icons: Lucide (https://lucide.dev/, ISC licence). The NISAR satellite drawing is our own, based on NASA's description of the spacecraft.
 - AI coding assistant: Claude (Anthropic).
 
 **Images**

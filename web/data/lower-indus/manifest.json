@@ -511,7 +511,7 @@
  "params": {
   "water_hh_db": -16.0,
   "water_hv_db": -24.0,
-  "water_calibration": "Keenjhar Lake (water) vs Rocky desert near Jhimpir (check area) (dry land)",
+  "water_calibration": "Keenjhar Lake (water) vs Jhimpir desert (dry land)",
   "water_thresholds_by_mode": {
    "2005": {
     "hh_db": -16.0,
@@ -2237,7 +2237,7 @@
    ]
   },
   "jhimpir-desert": {
-   "name": "Rocky desert near Jhimpir (check area)",
+   "name": "Jhimpir desert",
    "kind": "desert",
    "area_km2": 111.6,
    "series": [
@@ -2417,7 +2417,7 @@
    "note": "Stable bright target used as a radiometric sanity check."
   },
   "jhimpir-desert": {
-   "name": "Rocky desert near Jhimpir (check area)",
+   "name": "Jhimpir desert",
    "bbox": [
     67.85,
     25.05,

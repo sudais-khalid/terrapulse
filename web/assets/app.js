@@ -31,6 +31,33 @@ function status(msg, ms = 2200) {
   clearTimeout(status.t);
   if (ms) status.t = setTimeout(() => s.classList.remove("show"), ms);
 }
+// Radar loader: shown only when work takes longer than a moment, so quick renders never flicker.
+let loaderTimer = null, loaderCount = 0;
+function loading(on, text = "Processing radar layer") {
+  const el = $("#loader");
+  if (on) {
+    loaderCount++;
+    $("#loader-text").textContent = text;
+    clearTimeout(loaderTimer);
+    loaderTimer = setTimeout(() => { if (loaderCount > 0) el.hidden = false; }, 260);
+  } else {
+    loaderCount = Math.max(0, loaderCount - 1);
+    if (!loaderCount) { clearTimeout(loaderTimer); el.hidden = true; }
+  }
+}
+const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const isPhone = () => window.matchMedia("(max-width: 760px)").matches;
+function setSheet(open) {
+  $("#panel").classList.toggle("collapsed", !open);
+  $("#sheet-toggle").setAttribute("aria-expanded", String(open));
+}
+function radarSweep() {
+  if (reducedMotion()) return;
+  const el = $("#scan");
+  el.classList.remove("run");
+  void el.offsetWidth; // restart the animation
+  el.classList.add("run");
+}
 const fileFor = (date, kind) => `${DATA}dates/${date}_${kind}.png`;
 const dateOf = (i) => M.dates[i].date;
 const layerDef = (id) => LAYERS.find((l) => l.id === id);
@@ -64,7 +91,12 @@ function makeMap(container) {
   map.ready = new Promise((ok) => (ready = ok));
   // A newer image replacing one still decoding aborts the old load; that is expected, not an error.
   map.on("error", (e) => { if (e?.error?.name !== "AbortError") console.error(e?.error || e); });
-  map.on("load", () => {
+  // Start as soon as the style is ready. Waiting for "load" would also wait for the basemap tiles,
+  // so a slow imagery server would keep the whole app (story text, layers, pulse strip) blank.
+  let started = false;
+  const init = () => {
+    if (started) return;
+    started = true;
     map.addSource("site", { type: "image", url: BLANK, coordinates: [[0, 1], [1, 1], [1, 0], [0, 0]] });
     map.addLayer({ id: "site", type: "raster", source: "site", paint: { "raster-opacity": state.opacity, "raster-fade-duration": 0, "raster-resampling": "nearest" } }, "labels");
     map.addSource("gibs", { type: "raster", tiles: [GIBS_NISAR("2026-10-23")], tileSize: 256, maxzoom: 13, attribution: "NISAR mosaics: NASA GIBS" });
@@ -73,7 +105,9 @@ function makeMap(container) {
     map.addLayer({ id: "area-fill", type: "fill", source: "area", paint: { "fill-color": "#d0563f", "fill-opacity": 0.12 } });
     map.addLayer({ id: "area-line", type: "line", source: "area", paint: { "line-color": "#d0563f", "line-width": 2 } });
     ready();
-  });
+  };
+  map.on("style.load", init);
+  map.on("load", init);
   return map;
 }
 const whenLoaded = (map) => map.ready;
@@ -160,14 +194,14 @@ async function render() {
   $("#swipe").hidden = !comparing;
   const mainDate = world && state.gibsDate ? state.gibsDate : dateOf(state.index);
 
+  if (!world) loading(true);
   try {
     // Left (full) map: the compare pass when comparing two passes, otherwise the selected pass.
     const leftIndex = comparing && !optical ? iB : state.index;
     if (world) maps[0].getSource("gibs").setTiles([GIBS_NISAR(comparing && !optical ? dateOf(iB) : mainDate)]);
     else {
-      status("Drawing layer...", 0);
       const img = await imageFor(state.layer, leftIndex, state.layer === "change" ? iB : undefined);
-      if (token !== renderToken) return;
+      if (token !== renderToken) { loading(false); return; }
       await setSite(maps[0], img);
     }
     // Right (clipped) map.
@@ -180,15 +214,15 @@ async function render() {
       if (comparing && world) maps[1].getSource("gibs").setTiles([GIBS_NISAR(dateOf(state.index))]);
       else if (comparing) {
         const img = await imageFor(state.layer, state.index);
-        if (token !== renderToken) return;
+        if (token !== renderToken) { if (!world) loading(false); return; }
         await setSite(maps[1], img);
       }
     }
-    $("#status").classList.remove("show");
   } catch (e) {
     console.error(e);
     status(`Could not draw this layer: ${e.message}`, 6000);
   }
+  if (!world) loading(false);
   updateChrome();
   writeHash();
 }
@@ -205,8 +239,9 @@ function updateChrome() {
       : `<b>${niceDate(d.date)}</b> · pass ${state.index + 1} of ${M.dates.length}${extra}`;
   }
   const mainDate = world && state.gibsDate ? state.gibsDate : d.date;
-  $("#swipe-tag-a").textContent = optical ? `NISAR radar · ${niceDate(mainDate)}` : niceDate(dateOf(iB));
-  $("#swipe-tag-b").textContent = optical ? `${OPTICAL[state.optical].name} · ${niceDate(mainDate)}` : niceDate(d.date);
+  const short = isPhone(); // the date chip already shows the date on phones
+  $("#swipe-tag-a").textContent = optical ? (short ? "NISAR radar" : `NISAR radar · ${niceDate(mainDate)}`) : niceDate(dateOf(iB));
+  $("#swipe-tag-b").textContent = optical ? (short ? OPTICAL[state.optical].name : `${OPTICAL[state.optical].name} · ${niceDate(mainDate)}`) : niceDate(d.date);
   pulse.setIndex(state.index, (state.layer === "change" || (comparing && !optical)) ? iB : null);
   $("#threshold-block").hidden = !L.threshold;
   $("#compare-dates").hidden = state.compareWith === "optical";
@@ -300,6 +335,7 @@ const fmtTick = (v) => (Math.abs(v) >= 100 ? Math.round(v).toLocaleString("en-GB
 
 function openInspector(title) {
   $("#inspector").hidden = false;
+  if (isPhone()) setSheet(false);
   $("#insp-title").textContent = title;
   $("#insp-csv").hidden = true;
 }
@@ -329,12 +365,12 @@ function drawInspector(lngLat, hh, hv) {
 }
 
 async function analyseArea(box) {
-  status("Measuring area...", 0);
+  loading(true, "Measuring the area on every pass");
   openInspector("Area analysis");
   $("#insp-chart").innerHTML = "";
   $("#insp-read").textContent = "Reading every pass...";
   const res = await areaSeries(M, fileFor, box, (k, n) => { $("#insp-read").textContent = `Reading pass ${k} of ${n}...`; });
-  $("#status").classList.remove("show");
+  loading(false);
   if (!res) { $("#insp-read").textContent = "That box is outside the study area."; return; }
   lastArea = { box, ...res };
   const w = res.rows.map((r) => r.water_km2), f = res.rows.map((r) => r.flooded_veg_km2);
@@ -359,9 +395,10 @@ async function analyseArea(box) {
 function setMeasuring(on) {
   state.measuring = on;
   $("#measure").classList.toggle("active", on);
-  $("#measure").textContent = on ? "Drag a box on the map..." : "Measure an area";
+  $("#measure .lbl").textContent = on ? "Drag a box on the map..." : "Measure an area";
   $(".stage").classList.toggle("measuring", on);
   if (on) {
+    if (isPhone()) setSheet(false);
     state.compare = false;
     syncControls();
     render();
@@ -390,12 +427,19 @@ function setMode(mode) {
   state.mode = mode;
   document.querySelectorAll(".mode").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
   document.querySelectorAll(".pane").forEach((p) => (p.hidden = p.dataset.pane !== mode));
+  setSheet(true);
+  $("#panel").scrollTop = 0;
   if (mode === "story") showChapter(state.chapter);
   else writeHash();
 }
 
 function flyTo(view, duration = 1600) {
-  if (view.bbox) maps[0].fitBounds([[view.bbox[0], view.bbox[1]], [view.bbox[2], view.bbox[3]]], { padding: { top: 30, bottom: 30, left: window.innerWidth > 760 ? 380 : 30, right: 30 }, duration });
+  const panel = $("#panel");
+  const phone = isPhone();
+  const sheet = phone && !panel.classList.contains("collapsed") ? panel.offsetHeight : 0;
+  const padding = phone ? { top: 50, bottom: Math.min(sheet + 16, maps[0].getContainer().clientHeight * 0.6), left: 16, right: 16 }
+                        : { top: 30, bottom: 30, left: panel.offsetWidth + 40, right: 30 };
+  if (view.bbox) maps[0].fitBounds([[view.bbox[0], view.bbox[1]], [view.bbox[2], view.bbox[3]]], { padding, duration });
   else maps[0].flyTo({ center: view.center, zoom: view.zoom, duration });
 }
 
@@ -408,7 +452,10 @@ function showChapter(i) {
     b.classList.toggle("seen", k < state.chapter);
   });
   $("#prev-ch").disabled = state.chapter === 0;
-  $("#next-ch").textContent = state.chapter === story.length - 1 ? "Explore the map" : "Next";
+  $("#next-ch .lbl").textContent = state.chapter === story.length - 1 ? "Explore the map" : "Next";
+  $("#ch-count").textContent = `${state.chapter + 1} / ${story.length}`;
+  $("#panel").scrollTop = 0;
+  radarSweep();
   state.layer = c.layer;
   state.gibsDate = null;
   if (c.date) state.index = Math.max(0, M.dates.findIndex((d) => d.date === c.date));
@@ -489,7 +536,10 @@ function updatePulseZone() {
   $("#pulse-title").textContent = `Open water, ${k === "all" ? "whole study area" : z.name}`;
   const rain = M.rain?.series?.[k] || M.rain?.series?.all || null;
   const src = M.rain?.source?.includes("IMERG") ? "GPM IMERG" : M.rain ? "NASA POWER" : "none";
-  $("#pulse-sub").textContent = `blue: open water km² · dashed purple: flooded vegetation · bars: daily rain (${src}) · hatched: NISAR data gap${M.dates.some((d) => d.wind_roughened) ? " · wind: lakes roughened by wind" : ""}${M.dates.some((d) => d.rain_affected) ? " · rain: heavy rain just before the pass" : ""}`;
+  const item = (k, label) => `<span class="lg"><i class="k ${k}"></i>${label}</span>`;
+  $("#pulse-sub").innerHTML = item("k-water", "Open water, km²") + item("k-flood", "Flooded vegetation, km²") + item("k-rain", `Daily rain (${src})`) + item("k-gap", "NISAR data gap")
+    + (M.dates.some((d) => d.wind_roughened) ? `<span class="lg"><i class="k k-flag">wind</i>lake roughened by wind</span>` : "")
+    + (M.dates.some((d) => d.rain_affected) ? `<span class="lg"><i class="k k-flag">rain</i>heavy rain before the pass</span>` : "");
   pulse.setData(z.series, rain);
 }
 
@@ -706,6 +756,27 @@ function setupStaticControls() {
     const i = [...e.currentTarget.children].indexOf(e.target);
     if (i >= 0) showChapter(i);
   });
+  $("#sheet-toggle").addEventListener("click", () => setSheet($("#panel").classList.contains("collapsed")));
+  $("#legend-btn").addEventListener("click", () => {
+    const open = !$("#pulse-sub").classList.contains("open");
+    $("#pulse-sub").classList.toggle("open", open);
+    $("#legend-btn").setAttribute("aria-expanded", String(open));
+  });
+  const welcome = $("#welcome");
+  const remember = () => { try { localStorage.setItem("terrapulse-welcomed", "1"); } catch { /* storage blocked */ } };
+  const closeWelcome = () => { welcome.close(); remember(); };
+  $("#help").addEventListener("click", () => welcome.showModal());
+  $("#welcome-close").addEventListener("click", closeWelcome);
+  $("#welcome-story").addEventListener("click", () => { closeWelcome(); state.chapter = 0; setMode("story"); });
+  $("#welcome-explore").addEventListener("click", () => { closeWelcome(); setMode("explore"); render(); });
+  welcome.addEventListener("cancel", remember);
+  document.addEventListener("keydown", (e) => {
+    if (e.target.closest("input, select, textarea, [role=slider], dialog")) return;
+    if (e.key === "Escape" && !$("#inspector").hidden) $("#close-inspector").click();
+    if (state.mode !== "story" || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); $("#next-ch").click(); }
+    if (e.key === "ArrowLeft" && state.chapter > 0) { e.preventDefault(); showChapter(state.chapter - 1); }
+  });
   $("#close-inspector").addEventListener("click", () => {
     $("#inspector").hidden = true;
     maps[0].getSource("area")?.setData({ type: "FeatureCollection", features: [] });
@@ -722,7 +793,8 @@ async function boot() {
   } catch {
     SITES = [{ key: "lower-indus", name: "Lower Indus, Sindh", country: "Pakistan" }];
   }
-  $("#site-select").innerHTML = SITES.map((s) => `<option value="${s.key}">${s.name}, ${s.country}</option>`).join("");
+  const SHORT = { "lower-indus": "Lower Indus", "amazon-manaus": "Manaus" };
+  $("#site-select").innerHTML = SITES.map((s) => `<option value="${s.key}" title="${s.name}, ${s.country}">${isPhone() ? SHORT[s.key] || s.name.split(",")[0] : `${s.name}, ${s.country}`}</option>`).join("");
   maps = [makeMap("map"), makeMap("map-b")];
   syncMaps(maps[0], maps[1]);
   maps[0].addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
@@ -744,6 +816,9 @@ async function boot() {
     return;
   }
   applyHash(hash);
+  let welcomed = false;
+  try { welcomed = !!localStorage.getItem("terrapulse-welcomed"); } catch { /* storage blocked */ }
+  if (!welcomed && !location.hash.includes("mode=") && !navigator.webdriver) $("#welcome").showModal();
   // Hook for automated screenshots and debugging from the console.
   window.terrapulse = { state, render, showChapter, setMode, loadSite, analyseArea, inspect: (lng, lat) => inspect({ lng, lat }), maps, get M() { return M; } };
 }
