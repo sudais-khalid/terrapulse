@@ -20,6 +20,7 @@ Built by team **TERRAPULSE** (Sudais Khalid, Sunnia Aslam, Topi, Pakistan) for t
 
 ## What you can do
 
+- **Guided tour**: a spotlight walk-through of every control, with Back, Next and Skip (reopen it with the help button).
 - **Story**: short chapters for each site, with every number computed from the data when the page loads.
 - **Explore**: seven layers, 28 passes for the Indus and 10 for Manaus, a swipe divider to compare two passes or radar against the optical image of the same day (MODIS or HLS).
 - **Pulse strip**: open water and flooded vegetation for every pass against daily GPM IMERG rainfall, for the whole area or one place, with wind-roughened and rain-affected passes flagged. Press play, or **Listen** to hear the year as sound.

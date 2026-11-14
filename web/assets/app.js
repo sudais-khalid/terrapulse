@@ -3,6 +3,7 @@ import { radarColour, waterLive, changeMap, ramp, cssGradient, CHANGE_CLASSES, d
 import { Pulse } from "./pulse.js";
 import { Sonifier } from "./sound.js";
 import { areaSeries, toCSV, download, zoneRows, notableChanges, findPasses } from "./tools.js";
+import { createTour } from "./tour.js";
 
 const GIBS_BASE = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best";
 const GIBS_NISAR = (date) => `${GIBS_BASE}/NISAR_L2_Geocoded_Polarimetric_Covariance/default/${date}/GoogleMapsCompatible_Level13/{z}/{y}/{x}.png`;
@@ -20,7 +21,7 @@ const state = {
   compareIndex: null, thr: null, opacity: 0.9, chapter: 0, playing: null, sound: false, measuring: false,
   zone: "all", gibsDate: null,
 };
-let M, SITES = [], DATA = "", maps, pulse, story = [], stackData = null, renderToken = 0, lastArea = null;
+let M, SITES = [], DATA = "", maps, pulse, story = [], stackData = null, renderToken = 0, lastArea = null, tour = null;
 const sonifier = new Sonifier();
 
 // ------------------------------------------------------------------ helpers
@@ -767,11 +768,20 @@ function setupStaticControls() {
   const closeWelcome = () => { welcome.close(); remember(); };
   $("#help").addEventListener("click", () => welcome.showModal());
   $("#welcome-close").addEventListener("click", closeWelcome);
+  tour = createTour({
+    mode: () => state.mode,
+    setMode,
+    openSheet: () => setSheet(true),
+    remember,
+    startStory: () => { state.chapter = 0; setMode("story"); },
+    startExplore: () => { setMode("explore"); render(); },
+  });
+  $("#welcome-tour").addEventListener("click", () => { welcome.close(); tour.start(); });
   $("#welcome-story").addEventListener("click", () => { closeWelcome(); state.chapter = 0; setMode("story"); });
   $("#welcome-explore").addEventListener("click", () => { closeWelcome(); setMode("explore"); render(); });
   welcome.addEventListener("cancel", remember);
   document.addEventListener("keydown", (e) => {
-    if (e.target.closest("input, select, textarea, [role=slider], dialog")) return;
+    if (tour?.active || e.target.closest("input, select, textarea, [role=slider], dialog")) return;
     if (e.key === "Escape" && !$("#inspector").hidden) $("#close-inspector").click();
     if (state.mode !== "story" || e.altKey || e.ctrlKey || e.metaKey) return;
     if (e.key === "ArrowRight") { e.preventDefault(); $("#next-ch").click(); }
@@ -812,10 +822,14 @@ async function boot() {
     await loadSite(hash.get("site") || SITES[0].key, { keepView: !!hash.get("at") });
   } catch (e) {
     console.error(e);
+    $("#splash")?.remove();
     status("Data not found. Run the TerraPulse pipeline to create web/data first.", 0);
     return;
   }
   applyHash(hash);
+  const splash = $("#splash");
+  splash.classList.add("done");
+  setTimeout(() => splash.remove(), 600);
   let welcomed = false;
   try { welcomed = !!localStorage.getItem("terrapulse-welcomed"); } catch { /* storage blocked */ }
   if (!welcomed && !location.hash.includes("mode=") && !navigator.webdriver) $("#welcome").showModal();

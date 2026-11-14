@@ -81,6 +81,11 @@
   </svg>
 
   <a class="skip" href="#panel">Skip to the panel</a>
+  <div class="splash" id="splash" aria-hidden="true">
+    <svg class="splash-sat" viewBox="0 0 120 80"><path class="beam" d="M30 40 6 80h48z" fill="url(#g-beam)"/><use href="#nisar"/></svg>
+    <div class="splash-word">TerraPulse</div>
+    <div class="splash-status"><span class="scope"><i></i></span><span>Tuning in to NISAR</span></div>
+  </div>
 
   <header class="topbar">
     <div class="brand">
@@ -251,7 +256,8 @@
         <li><svg class="i"><use href="#i-activity"/></svg><div><b>The pulse strip</b><span>Tap any point in time at the bottom, or press play to watch the year.</span></div></li>
       </ol>
       <div class="welcome-actions">
-        <button class="btn" id="welcome-story"><svg class="i"><use href="#i-book"/></svg><span>Start the story</span></button>
+        <button class="btn wide" id="welcome-tour"><svg class="i"><use href="#i-satellite"/></svg><span>Take the 1-minute tour</span></button>
+        <button class="btn ghost" id="welcome-story"><svg class="i"><use href="#i-book"/></svg><span>Start the story</span></button>
         <button class="btn ghost" id="welcome-explore"><svg class="i"><use href="#i-map"/></svg><span>Explore the map</span></button>
       </div>
     </div>

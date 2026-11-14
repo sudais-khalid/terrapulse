@@ -412,6 +412,51 @@ output { font: 500 12px var(--mono); color: var(--ink); margin-left: auto; }
 .welcome-actions .btn { flex: 1 1 200px; min-height: 46px; }
 .welcome-close { position: absolute; top: 12px; right: 12px; background: rgba(11,17,40,.7); }
 
+/* ---------- start-up splash */
+.splash { position: fixed; inset: 0; z-index: 60; display: grid; place-content: center; justify-items: center; gap: 14px; background: radial-gradient(70% 60% at 50% 40%, #16224d 0%, var(--indigo) 70%); transition: opacity .5s var(--ease), visibility .5s; }
+.splash.done { opacity: 0; visibility: hidden; }
+.splash-sat { width: 180px; height: 120px; overflow: visible; animation: float 6s ease-in-out infinite; filter: drop-shadow(0 10px 24px rgba(0,0,0,.6)); }
+.splash-sat .beam { animation: beam 2.4s var(--ease) infinite; }
+.splash-word { font: 800 34px/1 var(--display); letter-spacing: .08em; text-transform: uppercase; }
+.splash-status { display: flex; align-items: center; gap: 10px; font: 500 12px var(--mono); color: var(--ink-dim); }
+
+/* ---------- panes switch with a short rise */
+.pane:not([hidden]) { animation: rise .35s var(--ease); }
+.welcome-actions .btn.wide { flex-basis: 100%; }
+
+/* ---------- guided tour */
+.tour { position: fixed; inset: 0; z-index: 70; }
+.tour[hidden] { display: none; }
+.tour-shade { position: absolute; inset: 0; width: 100%; height: 100%; }
+.tour-shade .tour-hole { transition: x var(--t-med) var(--ease), y var(--t-med) var(--ease), width var(--t-med) var(--ease), height var(--t-med) var(--ease); }
+.tour-ring { position: absolute; border-radius: 12px; pointer-events: none; box-shadow: 0 0 0 2px var(--gold), 0 0 0 6px rgba(227,180,83,.22), 0 0 30px rgba(227,180,83,.35); transition: all var(--t-med) var(--ease); animation: ring 2.2s ease-in-out infinite; }
+@keyframes ring { 50% { box-shadow: 0 0 0 2px var(--gold), 0 0 0 9px rgba(227,180,83,.12), 0 0 40px rgba(227,180,83,.4); } }
+.tour-card {
+  position: absolute; max-width: calc(100vw - 24px); padding: 16px 18px 16px; border-radius: 16px; border: 1px solid var(--line);
+  background: linear-gradient(180deg, #172150, #10173a); box-shadow: 0 30px 80px -20px rgba(0,0,0,.85); outline: none;
+  transition: left var(--t-med) var(--ease), top var(--t-med) var(--ease);
+}
+.tour-card.in { animation: rise .3s var(--ease); }
+.tour-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tour-step { font: 500 11px var(--mono); color: var(--gold); text-transform: uppercase; letter-spacing: .08em; }
+.tour-skip { background: none; border: 0; color: var(--ink-dim); font-size: 13px; cursor: pointer; padding: 6px 4px; text-decoration: underline; text-underline-offset: 3px; }
+.tour-skip:hover { color: var(--ink); }
+.tour-icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--panel-2); color: var(--water); margin-top: 10px; }
+.tour-icon[hidden] { display: none; }
+.tour-icon .i { width: 24px; height: 24px; }
+.tour-card h3 { font: 800 24px/1.05 var(--display); text-transform: uppercase; letter-spacing: .02em; margin: 10px 0 6px; }
+.tour-card p { margin: 0; color: var(--ink-dim); font-size: 14px; }
+.tour-card p b { color: var(--ink); }
+.tour-dots { display: flex; gap: 3px; margin: 14px 0 12px; }
+.tour-dots i { flex: 1; height: 4px; border-radius: 2px; background: var(--line); }
+.tour-dots i.seen { background: var(--ink-faint); }
+.tour-dots i.on { background: var(--madder); flex: 2; }
+.tour-actions, .tour-final { display: flex; gap: 8px; justify-content: space-between; }
+.tour-actions[hidden], .tour-final[hidden] { display: none; }
+.tour-final { flex-direction: column; margin-top: 14px; }
+.tour-final .btn { width: 100%; }
+body.touring .scan { display: none; }
+
 /* ---------- MapLibre tweaks */
 .maplibregl-ctrl-attrib { font-size: 10.5px; background: rgba(11,17,40,.75) !important; color: var(--ink-dim); }
 .maplibregl-ctrl-attrib a { color: var(--ink-dim); }

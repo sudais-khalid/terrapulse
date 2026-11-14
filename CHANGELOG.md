@@ -6,6 +6,7 @@ All notable changes to TerraPulse. The format follows [Keep a Changelog](https:/
 
 ### Added
 
+- Guided spotlight tour: 17 short steps that highlight each real control (modes, site, story buttons, map, pulse strip, play, listen, legend, layers, compare, measure, help) with Back, Next and Skip, keyboard support and automatic layout for phones; a branded start-up splash.
 - Premium interface: NISAR satellite mark in the header, a quick tour for first-time visitors (reopen with the help button), a radar swath sweep when a story chapter opens, a radar-scope loader instead of plain loading text, line icons throughout, a chapter counter, keyboard shortcuts (arrow keys for chapters, Escape closes panels) and a NISAR fact card in *How it works*.
 - Layouts for every screen: two-row header and a collapsible bottom sheet on phones, sticky Back and Next buttons, readable chart legend (inline on wide screens, a button elsewhere), month labels that never collide, safe-area support.
 
